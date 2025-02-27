@@ -96,6 +96,12 @@
                 updateMarkers();
                 updateLines();
             });
+
+            viewer.addHandler('viewport-change', function() {
+                lines.forEach((line) => {
+                    updateLine(line.overlay, line.start, line.end);
+                });
+            });
         }
 
         function handleCanvasClick(event) {
