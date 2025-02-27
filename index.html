@@ -41,6 +41,8 @@
     <div id="gcpForm">
         <input type="text" id="infoJsonUrl" placeholder="IIIF Image API info.json URL">
         <button onclick="loadImage()">Laad afbeelding</button>
+        <button onclick="setTool('point')">Punt</button>
+<button onclick="setTool('line')">Lijn</button>
     </div>
     <div id="gcpList"></div>
     <div id="modal">
@@ -77,7 +79,8 @@
                     image: 'viewer',   // Or: anno = new Annotorious({ ... })
                     widgets: [
                       { widget: 'COMMENT', vocabulary: [] }
-                    ]
+                    ],
+                    drawingTools: ['point', 'line']
                 });
 
                 anno.on('createAnnotation', function(annotation) {
@@ -100,29 +103,28 @@
         }
 
         function addGcp() {
-            const targetX = parseFloat(document.getElementById('targetX').value);
-            const targetY = parseFloat(document.getElementById('targetY').value);
-            if (!isNaN(targetX) && !isNaN(targetY)) {
-                // Update annotation target with GCP data
-                tempAnnotation.body = [{
-                    type: 'TextualBody',
-                    value: `X: ${targetX}, Y: ${targetY}`,
-                    purpose: 'describing',
-                    format: 'text/plain'
-                }];
-                anno.updateAnnotation(tempAnnotation);
+  const targetX = parseFloat(document.getElementById('targetX').value);
+  const targetY = parseFloat(document.getElementById('targetY').value);
+  if (!isNaN(targetX) && !isNaN(targetY)) {
+    const type = tempAnnotation.target.selector.type === 'Point' ? 'punt' : 'lijn';
+    tempAnnotation.body = [{
+      type: 'TextualBody',
+      value: `${type} - X: ${targetX}, Y: ${targetY}`,
+      purpose: 'describing'
+    }];
+    anno.updateAnnotation(tempAnnotation);
+    gcps.push({
+      annotation: tempAnnotation,
+      targetX: targetX,
+      targetY: targetY
+    });
+    updateGcpList();
+    closeModal();
+  } else {
+    alert('Voer geldige numerieke waarden in voor X en Y.');
+  }
+}
 
-                gcps.push({
-                    annotation: tempAnnotation,
-                    targetX: targetX,
-                    targetY: targetY
-                });
-                updateGcpList();
-                closeModal();
-            } else {
-                alert('Voer geldige numerieke waarden in voor X en Y.');
-            }
-        }
 
         function updateGcpList() {
             const gcpList = document.getElementById('gcpList');
@@ -131,6 +133,10 @@
                 gcpList.innerHTML += `<p>Punt ${index + 1}: ${gcp.annotation.target.selector.value} → (X: ${gcp.targetX}, Y: ${gcp.targetY})</p>`;
             });
         }
+
+        function setTool(tool) {
+  anno.setDrawingTool(tool);
+}
     </script>
 </body>
 </html>
