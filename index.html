@@ -43,8 +43,6 @@
             color: white;
             font-weight: bold;
             font-size: 12px;
-            position: absolute;
-            transform: translate(-50%, -50%);
         }
     </style>
 </head>
@@ -87,14 +85,15 @@
                     event.preventDefaultAction = true;
                     console.log('Canvas clicked');
                     console.log('Event position (pixels):', event.position);
-
-                    // Convert pixel coordinates to viewport coordinates
+                    
                     tempPoint = viewer.viewport.pointFromPixel(event.position);
                     console.log('Viewport point (relative):', tempPoint.x, tempPoint.y);
-
+                    
                     showModal();
                 });
             });
+
+            viewer.addHandler('update', updateMarkers);
         }
 
         function showModal() {
@@ -109,13 +108,11 @@
         }
 
         function addGcp() {
-        try {
-        console.log("++ starten met addGcp-routine");
-            console.log("++ starten met addGcp-routine")
+            console.log("++ starten met addGcp-routine");
             const targetX = parseFloat(document.getElementById('targetX').value);
             const targetY = parseFloat(document.getElementById('targetY').value);
             if (!isNaN(targetX) && !isNaN(targetY)) {
-                console.log("we zijn vast in de juiste subroutine geraakt!")
+                console.log("we zijn vast in de juiste subroutine geraakt!");
                 const gcp = {
                     x: tempPoint.x,
                     y: tempPoint.y,
@@ -130,9 +127,6 @@
             } else {
                 alert('Voer geldige numerieke waarden in voor X en Y.');
             }
-                } catch (error) {
-        console.error("Er is een fout opgetreden in addGcp:", error);
-    }
         }
 
         function updateGcpList() {
@@ -150,13 +144,22 @@
 
             console.log('GCP viewport coordinates (relative):', gcp.x, gcp.y);
 
-            marker.style.left = gcp.x * 100 + '%';
-            marker.style.top = gcp.y * 100 + '%';
-
-            viewer.element.appendChild(marker);
-
+            viewer.addOverlay({
+                element: marker,
+                location: new OpenSeadragon.Point(gcp.x, gcp.y),
+                placement: OpenSeadragon.Placement.CENTER
+            });
+            
             console.log('Marker added at (relative):', gcp.x, gcp.y);
-            console.log('Marker style:', marker.style.cssText);
+        }
+
+        function updateMarkers() {
+            gcps.forEach((gcp, index) => {
+                const marker = viewer.getOverlayById(`marker-${index + 1}`);
+                if (marker) {
+                    viewer.updateOverlay(marker, new OpenSeadragon.Point(gcp.x, gcp.y));
+                }
+            });
         }
     </script>
 </body>
