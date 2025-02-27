@@ -157,12 +157,12 @@
             line.style.position = 'absolute';
             line.style.backgroundColor = lineType === 'x' ? 'red' : 'blue';
             line.style.height = '2px';
-            line.style.transformOrigin = 'left';
+            line.style.transformOrigin = '0 0';
 
             const overlay = {
                 element: line,
-                location: new OpenSeadragon.Point(start.x, start.y),
-                placement: OpenSeadragon.Placement.CENTER,
+                location: start,
+                placement: OpenSeadragon.Placement.TOP_LEFT,
                 checkResize: false
             };
 
@@ -182,7 +182,9 @@
 
             lineOverlay.element.style.width = `${length}px`;
             lineOverlay.element.style.transform = `rotate(${angle}deg)`;
+            viewer.updateOverlay(lineOverlay, start);
         }
+
 
         function showModal() {
             document.getElementById('modal').style.display = 'block';
