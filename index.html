@@ -153,11 +153,11 @@
             line.style.position = 'absolute';
             line.style.backgroundColor = lineType === 'x' ? 'red' : 'blue';
             line.style.width = '2px';
-            line.style.transformOrigin = 'top left';
+            line.style.transformOrigin = '0 0';
 
             const overlay = {
                 element: line,
-                location: new OpenSeadragon.Point(0, 0),  // We zetten de locatie op (0,0) omdat we absolute positionering gebruiken
+                location: start,
                 placement: OpenSeadragon.Placement.TOP_LEFT,
                 checkResize: false
             };
@@ -179,9 +179,8 @@
             lineOverlay.element.style.height = `${length}px`;
             lineOverlay.element.style.transform = `rotate(${angle}deg)`;
             
-            // Pas de positie van de lijn aan
-            lineOverlay.element.style.left = `${startPixel.x}px`;
-            lineOverlay.element.style.top = `${startPixel.y}px`;
+            // Update de positie van de overlay
+            viewer.updateOverlay(lineOverlay, start);
         }
 
         function showModal() {
