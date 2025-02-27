@@ -149,15 +149,22 @@
         }
 
         function drawLine(start, end, lineType) {
-            const line = document.createElement('div');
-            line.style.position = 'absolute';
-            line.style.backgroundColor = lineType === 'x' ? 'red' : 'blue';
-            line.style.width = '2px';
-            line.style.transformOrigin = '0 0';
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.style.position = 'absolute';
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.left = '0';
+            svg.style.top = '0';
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('stroke', lineType === 'x' ? 'red' : 'blue');
+            line.setAttribute('stroke-width', '2');
+
+            svg.appendChild(line);
 
             const overlay = {
-                element: line,
-                location: start,
+                element: svg,
+                location: new OpenSeadragon.Point(0, 0),
                 placement: OpenSeadragon.Placement.TOP_LEFT,
                 checkResize: false
             };
@@ -169,18 +176,14 @@
         }
 
         function updateLine(lineOverlay, start, end) {
-            const startPixel = viewer.viewport.viewportToViewerElementCoordinates(start);
-            const endPixel = viewer.viewport.viewportToViewerElementCoordinates(end);
-            const dx = endPixel.x - startPixel.x;
-            const dy = endPixel.y - startPixel.y;
-            const length = Math.sqrt(dx * dx + dy * dy);
-            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            const startPixel = viewer.viewport.viewportToImageCoordinates(start);
+            const endPixel = viewer.viewport.viewportToImageCoordinates(end);
 
-            lineOverlay.element.style.height = `${length}px`;
-            lineOverlay.element.style.transform = `rotate(${angle}deg)`;
-            
-            // Update de positie van de overlay
-            viewer.updateOverlay(lineOverlay, start);
+            const line = lineOverlay.element.querySelector('line');
+            line.setAttribute('x1', startPixel.x);
+            line.setAttribute('y1', startPixel.y);
+            line.setAttribute('x2', endPixel.x);
+            line.setAttribute('y2', endPixel.y);
         }
 
         function showModal() {
