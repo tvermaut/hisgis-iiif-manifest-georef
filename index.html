@@ -149,56 +149,50 @@
         }
 
         function drawLine(start, end, lineType) {
+            // Maak een SVG-element aan
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.style.position = 'absolute';
+            svg.style.pointerEvents = 'none'; // Zorg ervoor dat de SVG niet interactief is
             svg.style.width = '100%';
             svg.style.height = '100%';
-            svg.style.left = '0';
-            svg.style.top = '0';
-            svg.style.pointerEvents = 'none'; // Zorgt ervoor dat de SVG niet interfereert met muisevents
 
+            // Maak een lijn binnen de SVG
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('stroke', lineType === 'x' ? 'red' : 'blue');
             line.setAttribute('stroke-width', '2');
 
             svg.appendChild(line);
 
+            // Voeg de SVG toe aan de viewer als overlay
             const overlay = {
                 element: svg,
-                location: new OpenSeadragon.Point(0, 0),
+                location: new OpenSeadragon.Point(0, 0), // We gebruiken viewport-coördinaten
                 placement: OpenSeadragon.Placement.TOP_LEFT,
                 checkResize: false
             };
 
             viewer.addOverlay(overlay);
+
+            // Update de lijn met de juiste coördinaten
             updateLine(overlay, start, end);
 
             return overlay;
         }
 
         function updateLine(lineOverlay, start, end) {
-            const svgElement = lineOverlay.element;
-            const line = svgElement.querySelector('line');
+            // Converteer start- en eindpunten naar viewport-coördinaten
+            const startViewport = viewer.viewport.pixelFromPoint(start);
+            const endViewport = viewer.viewport.pixelFromPoint(end);
 
-            const viewportBounds = viewer.viewport.getBounds();
-            const topLeft = viewer.viewport.viewportToViewerElementCoordinates(new OpenSeadragon.Point(viewportBounds.x, viewportBounds.y));
-            const bottomRight = viewer.viewport.viewportToViewerElementCoordinates(new OpenSeadragon.Point(viewportBounds.x + viewportBounds.width, viewportBounds.y + viewportBounds.height));
+            // Pas de lijn aan binnen het SVG-element
+            const line = lineOverlay.element.querySelector('line');
+            line.setAttribute('x1', startViewport.x);
+            line.setAttribute('y1', startViewport.y);
+            line.setAttribute('x2', endViewport.x);
+            line.setAttribute('y2', endViewport.y);
 
-            const svgWidth = bottomRight.x - topLeft.x;
-            const svgHeight = bottomRight.y - topLeft.y;
-
-            svgElement.setAttribute('width', svgWidth);
-            svgElement.setAttribute('height', svgHeight);
-            svgElement.style.left = `${topLeft.x}px`;
-            svgElement.style.top = `${topLeft.y}px`;
-
-            const startPoint = viewer.viewport.viewportToViewerElementCoordinates(start);
-            const endPoint = viewer.viewport.viewportToViewerElementCoordinates(end);
-
-            line.setAttribute('x1', startPoint.x - topLeft.x);
-            line.setAttribute('y1', startPoint.y - topLeft.y);
-            line.setAttribute('x2', endPoint.x - topLeft.x);
-            line.setAttribute('y2', endPoint.y - topLeft.y);
+            // Zorg ervoor dat het overlay-element correct wordt bijgewerkt
+            viewer.updateOverlay(lineOverlay);
         }
 
         function showModal() {
