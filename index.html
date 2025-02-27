@@ -78,6 +78,9 @@
                 console.log('Viewer opened');
                 
                 // Initialize Annotorious
+                try {
+ // anno = OpenSeadragon.Annotorious(viewer);
+
                 anno = OpenSeadragon.Annotorious(viewer, {
                     readOnly: false,
                     allowEmpty: true,
@@ -85,6 +88,9 @@
                         { widget: 'COMMENT', vocabulary: [] }
                     ]
                 });
+            } catch (error) {
+  console.error('Error initializing Annotorious:', error);
+}
 
                 anno.setDrawingTool(['point', 'line']);
 
