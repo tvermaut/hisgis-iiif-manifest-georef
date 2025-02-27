@@ -32,6 +32,9 @@
             overflow-y: auto;
             z-index: 1000;
         }
+        .gcp-marker {
+            cursor: move;
+        }
     </style>
 </head>
 <body>
@@ -54,6 +57,7 @@
         let gcps = [];
         let tempPoint;
         let tempMarker;
+        let activeMarker;
 
         function loadImage() {
             const infoJsonUrl = document.getElementById('infoJsonUrl').value;
@@ -84,7 +88,8 @@
                     }
                     
                     // Maak en voeg de nieuwe marker toe
-                    tempMarker = addMarker(tempPoint, 'temp');
+                    tempMarker = addMarker(tempPoint, 'temp', true);
+                    activeMarker = tempMarker;
                     
                     showModal();
                 });
@@ -102,6 +107,11 @@
 
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
+            if (tempMarker) {
+                viewer.removeOverlay(tempMarker.element);
+                tempMarker = null;
+            }
+            activeMarker = null;
         }
 
         function addGcp() {
@@ -124,7 +134,7 @@
                 if (tempMarker) {
                     viewer.removeOverlay(tempMarker.element);
                 }
-                addMarker(gcp, gcps.length);
+                addMarker(gcp, gcps.length, false);
                 
                 closeModal();
             } else {
@@ -140,11 +150,15 @@
             });
         }
 
-        function addMarker(point, id) {
-            const markerSvg = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" viewBox="0 0 128 128" style="enable-background:new 0 0 128 128" xml:space="preserve"><path d="M64 1C38.8 1 18.3 21.2 18.3 46S64 127 64 127s45.7-56.2 45.7-81S89.2 1 64 1zm0 73.9c-16.6 0-30-13.2-30-29.5C34 29 47.4 15.8 64 15.8S94 29 94 45.3 80.6 74.9 64 74.9z" style="fill-rule:evenodd;clip-rule:evenodd;fill:#191919"/></svg>`;
+        function addMarker(point, id, isTemp) {
+            const markerSvg = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" viewBox="0 0 128 128" style="enable-background:new 0 0 128 128" xml:space="preserve">
+                <path d="M64 1C38.8 1 18.3 21.2 18.3 46S64 127 64 127s45.7-56.2 45.7-81S89.2 1 64 1zm0 73.9c-16.6 0-30-13.2-30-29.5C34 29 47.4 15.8 64 15.8S94 29 94 45.3 80.6 74.9 64 74.9z" style="fill-rule:evenodd;clip-rule:evenodd;fill:#191919"/>
+                <circle cx="64" cy="45.3" r="29.5" fill="${isTemp ? 'rgba(255,0,0,0.5)' : 'none'}"/>
+            </svg>`;
             
             const marker = document.createElement('div');
             marker.innerHTML = markerSvg;
+            marker.className = 'gcp-marker';
             marker.style.width = '32px';
             marker.style.height = '32px';
             
@@ -156,7 +170,45 @@
             };
             
             viewer.addOverlay(overlay);
+
+            // Maak de marker versleepbaar
+            if (!isTemp) {
+                makeMarkerDraggable(marker, id);
+            }
+
             return overlay;
+        }
+
+        function makeMarkerDraggable(markerElement, id) {
+            let isDragging = false;
+            let startPoint;
+
+            markerElement.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                startPoint = viewer.viewport.pointFromPixel(new OpenSeadragon.Point(e.clientX, e.clientY));
+            });
+
+            viewer.addHandler('mousemove', function(e) {
+                if (isDragging) {
+                    const currentPoint = viewer.viewport.pointFromPixel(e.position);
+                    const delta = currentPoint.minus(startPoint);
+                    const overlay = viewer.getOverlayById(`marker-${id}`);
+                    if (overlay) {
+                        const newLocation = overlay.location.plus(delta);
+                        viewer.updateOverlay(overlay, newLocation);
+                        startPoint = currentPoint;
+
+                        // Update GCP coördinaten
+                        gcps[id - 1].x = newLocation.x;
+                        gcps[id - 1].y = newLocation.y;
+                        updateGcpList();
+                    }
+                }
+            });
+
+            viewer.addHandler('mouseup', function() {
+                isDragging = false;
+            });
         }
 
         function updateMarkers() {
