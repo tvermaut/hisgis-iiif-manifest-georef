@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IIIF Viewer met GCP-punten</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/3.1.0/openseadragon.min.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; }
+        #viewer { width: 100%; height: 100%; position: absolute; }
+        #gcpForm { position: absolute; top: 10px; left: 10px; z-index: 1000; }
+        #modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            z-index: 2000;
+        }
+        #gcpList {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(255,255,255,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .gcp-marker {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: red;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <div id="viewer"></div>
+    <div id="gcpForm">
+        <input type="text" id="infoJsonUrl" placeholder="IIIF Image API info.json URL">
+        <button onclick="loadImage()">Laad afbeelding</button>
+    </div>
+    <div id="gcpList"></div>
+    <div id="modal">
+        <h3>Voer coördinaten in</h3>
+        <input type="number" id="targetX" placeholder="Doel X" step="125">
+        <input type="number" id="targetY" placeholder="Doel Y" step="125">
+        <button onclick="addGcp()">Toevoegen</button>
+        <button onclick="closeModal()">Annuleren</button>
+    </div>
+
+    <script>
+        let viewer;
+        let gcps = [];
+        let tempPoint;
+
+        function loadImage() {
+            const infoJsonUrl = document.getElementById('infoJsonUrl').value;
+            viewer = OpenSeadragon({
+                id: "viewer",
+                prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/3.1.0/images/",
+                tileSources: infoJsonUrl,
+                maxZoomPixelRatio: 10,
+                gestureSettingsMouse: {
+                    clickToZoom: false
+                }
+            });
+
+            viewer.addHandler('open', function() {
+                console.log('Viewer opened');
+                viewer.addHandler('canvas-click', function(event) {
+                    if (!event.quick) return;
+                    event.preventDefaultAction = true;
+                    console.log('Canvas clicked');
+                    console.log('Event position (pixels):', event.position);
+
+                    // Convert pixel coordinates to viewport coordinates
+                    tempPoint = viewer.viewport.pointFromPixel(event.position);
+                    console.log('Viewport point (relative):', tempPoint.x, tempPoint.y);
+
+                    showModal();
+                });
+            });
+        }
+
+        function showModal() {
+            document.getElementById('modal').style.display = 'block';
+            document.getElementById('targetX').value = '';
+            document.getElementById('targetY').value = '';
+            document.getElementById('targetX').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function addGcp() {
+        try {
+        console.log("++ starten met addGcp-routine");
+            console.log("++ starten met addGcp-routine")
+            const targetX = parseFloat(document.getElementById('targetX').value);
+            const targetY = parseFloat(document.getElementById('targetY').value);
+            if (!isNaN(targetX) && !isNaN(targetY)) {
+                console.log("we zijn vast in de juiste subroutine geraakt!")
+                const gcp = {
+                    x: tempPoint.x,
+                    y: tempPoint.y,
+                    targetX: targetX,
+                    targetY: targetY
+                };
+                console.log('Adding GCP (relative):', gcp.x, gcp.y);
+                gcps.push(gcp);
+                updateGcpList();
+                addMarker(gcp, gcps.length);
+                closeModal();
+            } else {
+                alert('Voer geldige numerieke waarden in voor X en Y.');
+            }
+                } catch (error) {
+        console.error("Er is een fout opgetreden in addGcp:", error);
+    }
+        }
+
+        function updateGcpList() {
+            const gcpList = document.getElementById('gcpList');
+            gcpList.innerHTML = '<h3>GCP-punten:</h3>';
+            gcps.forEach((gcp, index) => {
+                gcpList.innerHTML += `<p>Punt ${index + 1}: (${gcp.x.toFixed(4)}, ${gcp.y.toFixed(4)}) → (${gcp.targetX}, ${gcp.targetY})</p>`;
+            });
+        }
+
+        function addMarker(gcp, index) {
+            const marker = document.createElement('div');
+            marker.className = 'gcp-marker';
+            marker.textContent = index;
+
+            console.log('GCP viewport coordinates (relative):', gcp.x, gcp.y);
+
+            marker.style.left = gcp.x * 100 + '%';
+            marker.style.top = gcp.y * 100 + '%';
+
+            viewer.element.appendChild(marker);
+
+            console.log('Marker added at (relative):', gcp.x, gcp.y);
+            console.log('Marker style:', marker.style.cssText);
+        }
+    </script>
+</body>
+</html>
