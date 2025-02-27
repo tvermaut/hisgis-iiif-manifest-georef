@@ -152,13 +152,13 @@
             const line = document.createElement('div');
             line.style.position = 'absolute';
             line.style.backgroundColor = lineType === 'x' ? 'red' : 'blue';
-            line.style.height = '2px';
-            line.style.transformOrigin = 'left';
+            line.style.width = '2px';  // We gebruiken nu width in plaats van height
+            line.style.transformOrigin = '0 0';
 
             const overlay = {
                 element: line,
-                location: new OpenSeadragon.Point(start.x, start.y),
-                placement: OpenSeadragon.Placement.CENTER,
+                location: start,
+                placement: OpenSeadragon.Placement.TOP_LEFT,
                 checkResize: false
             };
 
@@ -176,9 +176,11 @@
             const length = Math.sqrt(dx * dx + dy * dy);
             const angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
-            lineOverlay.element.style.width = `${length}px`;
+            lineOverlay.element.style.height = `${length}px`;
             lineOverlay.element.style.transform = `rotate(${angle}deg)`;
+            viewer.updateOverlay(lineOverlay, start);
         }
+
 
         function showModal() {
             document.getElementById('modal').style.display = 'block';
