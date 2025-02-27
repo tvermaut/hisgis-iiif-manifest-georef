@@ -38,6 +38,10 @@
         .line-button {
             margin-left: 10px;
         }
+        .delete-btn {
+            cursor: pointer;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -92,7 +96,10 @@
                 viewer.addHandler('canvas-click', handleCanvasClick);
             });
 
-            viewer.addHandler('update', updateMarkers);
+            viewer.addHandler('update', function() {
+                updateMarkers();
+                updateLines();
+            });
         }
 
         function handleCanvasClick(event) {
@@ -242,12 +249,15 @@
                         viewer.viewport.viewportToViewerElementCoordinates(tempLine.location)
                     )),
                     type: currentLineType,
-                    value: lineValue
+                    value: lineValue,
+                    overlay: tempLine
                 };
                 console.log('Adding Line:', line);
                 lines.push(line);
                 updateLinesList();
                 
+                tempLine = null;
+                lineStartPoint = null;
                 closeLineModal();
             } else {
                 alert('Voer een geldige numerieke waarde in voor de lijn.');
@@ -258,16 +268,37 @@
             const gcpList = document.getElementById('gcpList');
             gcpList.innerHTML = '<h3>GCP-punten:</h3>';
             gcps.forEach((gcp, index) => {
-                gcpList.innerHTML += `<p>Punt ${index + 1}: (${gcp.x.toFixed(4)}, ${gcp.y.toFixed(4)}) → (${gcp.targetX}, ${gcp.targetY})</p>`;
+                gcpList.innerHTML += `
+                    <p>
+                        Punt ${index + 1}: (${gcp.x.toFixed(4)}, ${gcp.y.toFixed(4)}) → (${gcp.targetX}, ${gcp.targetY})
+                        <span class="delete-btn" onclick="deleteGcp(${index})">🗑️</span>
+                    </p>`;
             });
+            updateLinesList();
         }
 
         function updateLinesList() {
             const gcpList = document.getElementById('gcpList');
             gcpList.innerHTML += '<h3>Lijnen:</h3>';
             lines.forEach((line, index) => {
-                gcpList.innerHTML += `<p>Lijn ${index + 1} (${line.type}): ${line.value}</p>`;
+                gcpList.innerHTML += `
+                    <p>
+                        Lijn ${index + 1} (${line.type}): ${line.value}
+                        <span class="delete-btn" onclick="deleteLine(${index})">🗑️</span>
+                    </p>`;
             });
+        }
+
+        function deleteGcp(index) {
+            viewer.removeOverlay(viewer.getOverlayById(`marker-${index + 1}`));
+            gcps.splice(index, 1);
+            updateGcpList();
+        }
+
+        function deleteLine(index) {
+            viewer.removeOverlay(lines[index].overlay);
+            lines.splice(index, 1);
+            updateLinesList();
         }
 
         function addMarker(point, id, isTemp) {
@@ -335,6 +366,12 @@
                 if (marker) {
                     viewer.updateOverlay(marker, new OpenSeadragon.Point(gcp.x, gcp.y));
                 }
+            });
+        }
+
+        function updateLines() {
+            lines.forEach((line) => {
+                updateLine(line.overlay, line.start, line.end);
             });
         }
     </script>
