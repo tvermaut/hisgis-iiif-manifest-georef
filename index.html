@@ -97,8 +97,8 @@
                 updateLines();
             });
 
-            viewer.addHandler('viewport-change', function() {
-                lines.forEach((line) => {
+            viewer.addHandler('update-viewport', function() {
+                lines.forEach(line => {
                     updateLine(line.overlay, line.start, line.end);
                 });
             });
@@ -186,18 +186,15 @@
         }
 
         function updateLine(lineOverlay, start, end) {
-            // Converteer start- en eindpunten naar viewport-coördinaten
-            const startViewport = viewer.viewport.pixelFromPoint(start);
-            const endViewport = viewer.viewport.pixelFromPoint(end);
+            const startPixel = viewer.viewport.viewportToViewerElementCoordinates(start);
+            const endPixel = viewer.viewport.viewportToViewerElementCoordinates(end);
 
-            // Pas de lijn aan binnen het SVG-element
             const line = lineOverlay.element.querySelector('line');
-            line.setAttribute('x1', startViewport.x);
-            line.setAttribute('y1', startViewport.y);
-            line.setAttribute('x2', endViewport.x);
-            line.setAttribute('y2', endViewport.y);
+            line.setAttribute('x1', startPixel.x);
+            line.setAttribute('y1', startPixel.y);
+            line.setAttribute('x2', endPixel.x);
+            line.setAttribute('y2', endPixel.y);
 
-            // Zorg ervoor dat het overlay-element correct wordt bijgewerkt
             viewer.updateOverlay(lineOverlay);
         }
 
