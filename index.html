@@ -155,6 +155,7 @@
             svg.style.height = '100%';
             svg.style.left = '0';
             svg.style.top = '0';
+            svg.style.pointerEvents = 'none'; // Zorgt ervoor dat de SVG niet interfereert met muisevents
 
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('stroke', lineType === 'x' ? 'red' : 'blue');
@@ -176,14 +177,28 @@
         }
 
         function updateLine(lineOverlay, start, end) {
-            const startPixel = viewer.viewport.viewportToImageCoordinates(start);
-            const endPixel = viewer.viewport.viewportToImageCoordinates(end);
+            const svgElement = lineOverlay.element;
+            const line = svgElement.querySelector('line');
 
-            const line = lineOverlay.element.querySelector('line');
-            line.setAttribute('x1', startPixel.x);
-            line.setAttribute('y1', startPixel.y);
-            line.setAttribute('x2', endPixel.x);
-            line.setAttribute('y2', endPixel.y);
+            const viewportBounds = viewer.viewport.getBounds();
+            const topLeft = viewer.viewport.viewportToViewerElementCoordinates(new OpenSeadragon.Point(viewportBounds.x, viewportBounds.y));
+            const bottomRight = viewer.viewport.viewportToViewerElementCoordinates(new OpenSeadragon.Point(viewportBounds.x + viewportBounds.width, viewportBounds.y + viewportBounds.height));
+
+            const svgWidth = bottomRight.x - topLeft.x;
+            const svgHeight = bottomRight.y - topLeft.y;
+
+            svgElement.setAttribute('width', svgWidth);
+            svgElement.setAttribute('height', svgHeight);
+            svgElement.style.left = `${topLeft.x}px`;
+            svgElement.style.top = `${topLeft.y}px`;
+
+            const startPoint = viewer.viewport.viewportToViewerElementCoordinates(start);
+            const endPoint = viewer.viewport.viewportToViewerElementCoordinates(end);
+
+            line.setAttribute('x1', startPoint.x - topLeft.x);
+            line.setAttribute('y1', startPoint.y - topLeft.y);
+            line.setAttribute('x2', endPoint.x - topLeft.x);
+            line.setAttribute('y2', endPoint.y - topLeft.y);
         }
 
         function showModal() {
