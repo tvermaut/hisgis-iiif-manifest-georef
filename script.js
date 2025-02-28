@@ -169,11 +169,15 @@ function addGcp() {
 function addLine() {
     const lineValue = parseFloat(document.getElementById('lineValue').value);
     if (!isNaN(lineValue)) {
+        const startPoint = new OpenSeadragon.Point(tempLine.location.x, tempLine.location.y);
+        const viewerCoordsStart = viewer.viewport.viewportToViewerElementCoordinates(startPoint);
+
+        const endPoint = new OpenSeadragon.Point(tempLine.location.x + tempLine.location.width, tempLine.location.y + tempLine.location.height);
+        const viewerCoordsEnd = viewer.viewport.viewportToViewerElementCoordinates(endPoint);
+
         const line = {
-            start: lineStartPoint,
-            end: viewer.viewport.pointFromPixel(viewer.viewport.viewerElementToViewportCoordinates(
-                viewer.viewport.viewportToViewerElementCoordinates(tempLine.location)
-            )),
+            start: startPoint,
+            end: endPoint,
             type: currentLineType,
             value: lineValue,
             overlay: tempLine
