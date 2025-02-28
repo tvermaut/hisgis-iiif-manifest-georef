@@ -9,13 +9,11 @@
 <body>
 
     <div id="editor-container">
-        <h1>Historische Kaart Editor</h1>
-
-        <!-- Kaart viewer -->
         <canvas id="mapCanvas"></canvas>
 
-        <!-- Invoervelden -->
         <div id="controls">
+            <h1>Historische Kaart Editor</h1>
+
             <label for="info-json-url">IIIF info.json URL:</label>
             <input type="text" id="info-json-url" placeholder="Vul de info.json URL in">
 
@@ -34,13 +32,6 @@
 
             <button id="generate-grid">Genereer Ruitkruisnet</button>
         </div>
-
-        <!-- Grafieken -->
-        <div id="graphs">
-            <canvas id="gauss-curve"></canvas>
-            <canvas id="scale-graph"></canvas>
-        </div>
-
     </div>
 
     <script src="script.js"></script>

@@ -1,14 +1,3 @@
-function resizeCanvas() {
-    mapCanvas.width = window.innerWidth;
-    mapCanvas.height = window.innerHeight;
-    regenerateGrid();
-}
-
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-
-
-
 document.addEventListener("DOMContentLoaded", () => {
     const mapCanvas = document.getElementById('mapCanvas');
     const ctx = mapCanvas.getContext('2d');
@@ -21,69 +10,101 @@ document.addEventListener("DOMContentLoaded", () => {
     let scale = 2500;
     let xAxis = 0;
     let yAxis = 0;
-    let infoJsonUrl = "";
+    let tiles = [];
 
-    // Functie: Genereren van ruitkruisnet
-function regenerateGrid() {
-    ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
-
-    // Herlaad de tiles
-    if (infoJsonUrl) {
-        loadTilesFromIIIF(infoJsonUrl);
-    }
-
-    const step = (scale === 2500) ? 125 : (scale === 1250) ? 250 : 500;
-    const centerX = mapCanvas.width / 2;
-    const centerY = mapCanvas.height / 2;
-
-    for (let i = -5; i <= 5; i++) {
-        for (let j = -5; j <= 5; j++) {
-            const x = centerX + (i * step);
-            const y = centerY + (j * step);
-            ctx.beginPath();
-            ctx.arc(x, y, 3, 0, 2 * Math.PI);
-            ctx.fill();
+    function resizeCanvas() {
+        mapCanvas.width = window.innerWidth;
+        mapCanvas.height = window.innerHeight;
+        
+        if (typeof regenerateGrid === 'function') {
+            regenerateGrid();
         }
     }
-}
-
-function resizeCanvas() {
-    mapCanvas.width = window.innerWidth;
-    mapCanvas.height = window.innerHeight;
     
-    // Controleer of regenerateGrid bestaat voordat we het aanroepen
-    if (typeof regenerateGrid === 'function') {
-        regenerateGrid();
-    } else {
-        console.warn("regenerateGrid is nog niet gedefinieerd.");
-    }
-}
-
-// Roep resizeCanvas alleen aan als het script volledig geladen is
-window.addEventListener('resize', resizeCanvas);
-
-// Functie: Ophalen van info.json URL en kaart laden
-function loadMap() {
-    infoJsonUrl = infoJsonUrlInput.value.trim();
-    if (infoJsonUrl) {
-        loadTilesFromIIIF(infoJsonUrl);
-    }
-}
-
-    // Event: Canvas aanpassen bij vensterverandering
     window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-    // Event: Kaart automatisch laden bij invoer van info.json URL
-    infoJsonUrlInput.addEventListener('input', loadMap);
+    async function loadTilesFromIIIF(infoJsonUrl) {
+        try {
+            const response = await fetch(infoJsonUrl);
+            const data = await response.json();
 
-    // Event: Genereren van ruitkruisnet bij klikken op knop
+            const width = data.width;
+            const height = data.height;
+            const tileWidth = data.tiles[0].width;
+            const tileHeight = data.tiles[0].height;
+
+            const topLeftX = Math.floor(xAxis / tileWidth);
+            const topLeftY = Math.floor(yAxis / tileHeight);
+            const bottomRightX = Math.ceil((xAxis + mapCanvas.width) / tileWidth);
+            const bottomRightY = Math.ceil((yAxis + mapCanvas.height) / tileHeight);
+
+            tiles = [];
+            for (let i = topLeftX; i <= bottomRightX; i++) {
+                for (let j = topLeftY; j <= bottomRightY; j++) {
+                    const tileUrl = `${data['@id']}/tile/${i},${j},${scale}.jpg`;
+                    tiles.push({ x: i * tileWidth, y: j * tileHeight, url: tileUrl });
+                }
+            }
+
+            ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+            tiles.forEach(tile => {
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, tile.x, tile.y);
+                };
+                img.src = tile.url;
+            });
+
+        } catch (error) {
+            console.error('Fout bij het laden van de IIIF tiles:', error);
+        }
+    }
+
+    function regenerateGrid() {
+        ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+
+        if (infoJsonUrlInput.value.trim()) {
+            loadTilesFromIIIF(infoJsonUrlInput.value.trim());
+        }
+
+        const step = (scale === 2500) ? 125 : (scale === 1250) ? 250 : 500;
+        const centerX = mapCanvas.width / 2;
+        const centerY = mapCanvas.height / 2;
+
+        for (let i = -5; i <= 5; i++) {
+            for (let j = -5; j <= 5; j++) {
+                const x = centerX + (i * step);
+                const y = centerY + (j * step);
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+    }
+
+    infoJsonUrlInput.addEventListener("input", () => {
+        const newUrl = infoJsonUrlInput.value.trim();
+        if (newUrl) {
+            loadTilesFromIIIF(newUrl);
+        }
+    });
+
+    scaleSelect.addEventListener('change', (event) => {
+        scale = parseInt(event.target.value);
+        regenerateGrid();
+    });
+
     generateGridButton.addEventListener('click', () => {
         xAxis = parseFloat(xAxisValue.value) || 0;
         yAxis = parseFloat(yAxisValue.value) || 0;
         regenerateGrid();
     });
 
-    // Start canvas grootte instellen
-    resizeCanvas();
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramUrl = urlParams.get('infoJsonUrl');
+    if (paramUrl) {
+        infoJsonUrlInput.value = paramUrl;
+        loadTilesFromIIIF(paramUrl);
+    }
 });
-

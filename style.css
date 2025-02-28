@@ -19,7 +19,7 @@ html, body {
     position: absolute;
     top: 0;
     left: 0;
-    background: #ddd; /* Grijze achtergrond voor het laden */
+    background: #ddd;
 }
 
 #controls {
@@ -32,12 +32,9 @@ html, body {
     z-index: 10;
 }
 
-#graphs {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    background: rgba(255, 255, 255, 0.8);
-    padding: 10px;
-    border-radius: 5px;
-    z-index: 10;
+input, select, button {
+    display: block;
+    width: 100%;
+    margin: 5px 0;
+    padding: 5px;
 }
