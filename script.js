@@ -106,15 +106,8 @@ document.addEventListener("DOMContentLoaded", () => {
             this.markers[id][type] = marker;
         }
 
-        removeMarkers(id) {
-            if (this.markers[id]) {
-                Object.values(this.markers[id]).forEach(marker => this.map.removeLayer(marker));
-                delete this.markers[id];
-            }
-        }
-
         checkAndGenerateGrid() {
-            if (this.axes['x'] && this.axes['y']) {
+            if (this.axes['x'] && this.axes['x2'] && this.axes['y']) {
                 this.generateGrid();
             }
         }
@@ -124,59 +117,28 @@ document.addEventListener("DOMContentLoaded", () => {
                 this.map.removeLayer(this.gridLayer);
             }
 
-            const scale = document.getElementById("scale-selector").value;
-            const gridSize = scale === "2500" ? 250 : scale === "1250" ? 125 : 500;
-            const xBase = parseFloat(document.getElementById("y-axis-value").value) || 0;
-            const yBase = parseFloat(document.getElementById("x-axis-value").value) || 0;
+            const x1 = this.axes['x'].getLatLngs()[0];
+            const x2 = this.axes['x2'].getLatLngs()[0];
+            const y1 = this.axes['y'].getLatLngs()[0];
+            
+            const pixelPerMeter = Math.abs(x2.lng - x1.lng) / (parseFloat(document.getElementById("x-axis-2-value").value) || 1);
             
             let gridLines = [];
 
             for (let i = -10; i <= 10; i++) {
-                let xOffset = xBase + i * gridSize;
-                let yOffset = yBase + i * gridSize;
+                let xOffset = x1.lng + i * 10 * pixelPerMeter;
+                let yOffset = y1.lat + i * 10 * pixelPerMeter;
 
                 gridLines.push(L.polyline([
-                    [yBase - 10 * gridSize, xOffset],
-                    [yBase + 10 * gridSize, xOffset]
-                ], { color: "gray", weight: 1, opacity: 0.5 }));
-
-                gridLines.push(L.polyline([
-                    [yOffset, xBase - 10 * gridSize],
-                    [yOffset, xBase + 10 * gridSize]
+                    [yOffset, x1.lng - 100 * pixelPerMeter],
+                    [yOffset, x1.lng + 100 * pixelPerMeter]
                 ], { color: "gray", weight: 1, opacity: 0.5 }));
             }
 
             this.gridLayer = L.layerGroup(gridLines).addTo(this.map);
-            console.log("✅ Grid gegenereerd!");
+            console.log("✅ Gedraaid grid gegenereerd!");
         }
     }
 
     const editor = new AxisEditor(map);
-    let drawMode = null;
-    let startPoint = null;
-
-    function enableDrawMode(mode) {
-        drawMode = mode;
-        startPoint = null;
-        console.log(`🖍️ Tekenen van een ${mode === 'x' ? 'X-as (rood)' : 'Y-as (blauw)'} gestart! Klik twee punten.`);
-    }
-
-    map.on("click", (e) => {
-        if (!drawMode) return;
-        if (!startPoint) {
-            startPoint = e.latlng;
-        } else {
-            editor.addOrUpdateAxis(drawMode, startPoint, e.latlng, drawMode === "x" ? "red" : "blue");
-            drawMode = null;
-            startPoint = null;
-        }
-    });
-
-    document.getElementById("draw-x-axis").addEventListener("click", () => {
-        enableDrawMode("x");
-    });
-    
-    document.getElementById("draw-y-axis").addEventListener("click", () => {
-        enableDrawMode("y");
-    });
 });
