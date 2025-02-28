@@ -65,8 +65,31 @@ document.addEventListener("DOMContentLoaded", () => {
             this.axes = {};
             this.gridLayer = null;
             this.markers = {};
+            this.currentDrawing = null;
         }
     
+        startDrawingAxis(id, color) {
+            console.log(`✏️ Start tekenen van as: ${id}`);
+            this.currentDrawing = { id, color };
+            this.map.on("click", this.handleMapClick.bind(this));
+        }
+    
+        handleMapClick(event) {
+            if (!this.currentDrawing) return;
+    
+            const { id, color } = this.currentDrawing;
+    
+            if (!this.axes[id]) {
+                this.axes[id] = { start: event.latlng };
+                console.log(`📍 Startpunt ${id} gezet.`);
+            } else {
+                this.addOrUpdateAxis(id, this.axes[id].start, event.latlng, color);
+                console.log(`✅ As ${id} getekend.`);
+                this.currentDrawing = null;
+                this.map.off("click", this.handleMapClick.bind(this));
+            }
+        }
+
         addOrUpdateAxis(id, start, end, color) {
             if (this.axes[id]) {
                 this.map.removeLayer(this.axes[id]);
@@ -150,15 +173,8 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const editor = new AxisEditor(map);
 
-    document.getElementById("draw-x-axis").addEventListener("click", () => {
-        editor.startDrawingAxis("x", "red");
-    });
-    
-    document.getElementById("draw-y-axis").addEventListener("click", () => {
-        editor.startDrawingAxis("y", "blue");
-    });
-    
-    document.getElementById("draw-x-axis-2").addEventListener("click", () => {
-        editor.startDrawingAxis("x2", "orange");
-    });
+document.getElementById("draw-x-axis").addEventListener("click", () => editor.startDrawingAxis("x", "red"));
+document.getElementById("draw-y-axis").addEventListener("click", () => editor.startDrawingAxis("y", "blue"));
+document.getElementById("draw-x2-axis").addEventListener("click", () => editor.startDrawingAxis("x2", "orange"));
+
 });
