@@ -1,105 +1,54 @@
 document.addEventListener("DOMContentLoaded", async () => {
-    const map = L.map('map', {
-        center: [52.0, 5.0],  // Startpositie (NL)
-        zoom: 5
-    });
-
-    let tileLayer;
+    const infoJsonUrlInput = document.getElementById('info-json-url');
     const scaleSelect = document.getElementById('scale-select');
     const generateGridButton = document.getElementById('generate-grid');
     const xAxisValue = document.getElementById('x-axis-value');
     const yAxisValue = document.getElementById('y-axis-value');
-    const infoJsonUrlInput = document.getElementById('info-json-url');
 
-    let scale = 2500;
-    let xAxis = 0;
-    let yAxis = 0;
+    let map = L.map('map', {
+        center: [0, 0],
+        zoom: 2,
+        crs: L.CRS.Simple
+    });
 
-    // IIIF tiles laden
-    async function loadTilesFromIIIF(infoJsonUrl) {
+    let iiifLayer;
+
+    async function loadIIIFLayer(url) {
         try {
-            const response = await fetch(infoJsonUrl);
+            const response = await fetch(url);
             const data = await response.json();
 
-            const imageWidth = data.width;
-            const imageHeight = data.height;
-            const tileSize = data.tiles[0].width;
-            const baseUrl = data['@id'];
-
-            if (tileLayer) {
-                map.removeLayer(tileLayer);
+            if (iiifLayer) {
+                map.removeLayer(iiifLayer);
             }
 
-            // Maak een Leaflet tile layer met IIIF
-            tileLayer = L.tileLayer.iiif(`${baseUrl}/{z}/{x}/{y}/full/0/default.jpg`, {
-                tileSize: tileSize,
-                attribution: 'IIIF Map Viewer',
-                minZoom: 1,
-                maxZoom: 8,
-                bounds: [[0, 0], [imageHeight, imageWidth]]
+            iiifLayer = L.tileLayer.iiif(url, {
+                attribution: "Bron: IIIF"
             });
 
-            tileLayer.addTo(map);
+            iiifLayer.addTo(map);
+            map.fitBounds(iiifLayer.getBounds());
         } catch (error) {
-            console.error('Fout bij het laden van de IIIF tiles:', error);
+            console.error("Fout bij laden van IIIF:", error);
         }
     }
 
-    // Grid tekenen
-    function drawGrid() {
-        // Verwijder eerdere lagen
-        map.eachLayer(layer => {
-            if (layer instanceof L.LayerGroup) {
-                map.removeLayer(layer);
-            }
-        });
-
-        const step = (scale === 2500) ? 125 : (scale === 1250) ? 250 : 500;
-        const gridLayer = L.layerGroup();
-
-        for (let i = -5; i <= 5; i++) {
-            for (let j = -5; j <= 5; j++) {
-                const lat = map.getCenter().lat + (i * step * 0.0001);
-                const lng = map.getCenter().lng + (j * step * 0.0001);
-
-                const circle = L.circle([lat, lng], {
-                    radius: 10,
-                    color: 'red',
-                    fillColor: '#f03',
-                    fillOpacity: 0.5
-                });
-
-                gridLayer.addLayer(circle);
-            }
-        }
-
-        gridLayer.addTo(map);
-    }
-
-    // Event listeners
     infoJsonUrlInput.addEventListener("input", () => {
         const newUrl = infoJsonUrlInput.value.trim();
         if (newUrl) {
-            loadTilesFromIIIF(newUrl);
+            loadIIIFLayer(newUrl);
         }
     });
 
-    scaleSelect.addEventListener('change', (event) => {
-        scale = parseInt(event.target.value);
-        drawGrid();
+    generateGridButton.addEventListener("click", () => {
+        console.log("Grid genereren op:", xAxisValue.value, yAxisValue.value);
     });
 
-    generateGridButton.addEventListener('click', () => {
-        xAxis = parseFloat(xAxisValue.value) || 0;
-        yAxis = parseFloat(yAxisValue.value) || 0;
-        drawGrid();
-    });
-
-    // Automatisch info.json laden uit URL-query
+    // Check of een info.json URL in de GET-parameters zit
     const urlParams = new URLSearchParams(window.location.search);
-    const paramUrl = urlParams.get('infoJsonUrl');
+    const paramUrl = urlParams.get("infoJsonUrl");
     if (paramUrl) {
         infoJsonUrlInput.value = paramUrl;
-        loadTilesFromIIIF(paramUrl);
+        loadIIIFLayer(paramUrl);
     }
 });
