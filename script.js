@@ -21,7 +21,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("✅ Leaflet-kaart succesvol geïnitialiseerd!");
 
-    // IIIF-afbeelding laden
+    // Zorg ervoor dat lijnen onder de markers en boven de afbeelding liggen
+    map.createPane("imagePane").style.zIndex = 200;
+    map.createPane("axesPane").style.zIndex = 400;
+
     document.getElementById("load-iiif").addEventListener("click", () => {
         const infoUrl = document.getElementById("info-json-url").value.trim();
         if (!infoUrl) {
@@ -39,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.iiifLayer = L.tileLayer.iiif(infoUrl, {
             fitBounds: true,  
             setMaxBounds: true,
+            pane: "imagePane",
         }).addTo(map);
     }
 
@@ -55,19 +59,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 this.markers[id].forEach(marker => this.map.removeLayer(marker));
             }
 
-            this.axes[id] = L.polyline([start, end], { color, weight: 3 }).addTo(this.map);
-            this.markers[id] = this.createDraggableMarkers(id, start, end);
+            this.axes[id] = L.polyline([start, end], { color, weight: 3, pane: "axesPane" }).addTo(this.map);
+            this.markers[id] = this.createDraggableMarkers(id, start, end, color);
         }
 
-        createDraggableMarkers(axisId, start, end) {
+        createDraggableMarkers(axisId, start, end, color) {
+            const svgIcon = encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+                    <path d="M33.1 31.3C33.1 14.6 47.2 1 64.2 1s30.7 13.5 30.7 30.2c0 14.4-10.2 26.4-23.8 29.4L63.8 127l-7.3-66.4c-13.3-3.5-23.4-15.2-23.4-29.3zm30.7-8.1c0-4.6-3.8-8.2-8.4-8.2S47 18.6 47 23.2s3.8 8.2 8.4 8.2 8.4-3.7 8.4-8.2z" fill="${color}"/>
+                </svg>`);
+
             const markerOptions = {
                 draggable: true,
-                icon: L.divIcon({
-                    className: "axis-marker",
-                    html: "⬤",
-                    iconSize: [12, 12],
-                    iconAnchor: [6, 6]
-                })
+                icon: L.icon({
+                    iconUrl: `data:image/svg+xml,${svgIcon}`,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 24]
+                }),
+                pane: "axesPane",
             };
 
             const startMarker = L.marker(start, markerOptions).addTo(this.map);
