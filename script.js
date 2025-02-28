@@ -18,13 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("✅ 'map' container gevonden.");
     }
 
-    // Als er al een bestaande Leaflet-kaart is, verwijder deze en wacht even
-    if (window.map !== undefined) {
-        console.warn("⚠️ Er was al een Leaflet-kaart, deze wordt verwijderd.");
-        window.map.remove();
-        window.map = undefined; // Zorg ervoor dat hij volledig wordt gereset
-    }
-
     setTimeout(() => {
         try {
             window.map = L.map("map", {
