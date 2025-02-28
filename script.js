@@ -1,3 +1,5 @@
+import 'leaflet-iiif';
+
 document.addEventListener("DOMContentLoaded", async () => {
     const infoJsonUrlInput = document.getElementById('info-json-url');
     const scaleSelect = document.getElementById('scale-select');
@@ -21,6 +23,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (iiifLayer) {
                 map.removeLayer(iiifLayer);
             }
+
+            console.log()
 
             iiifLayer = L.tileLayer.iiif(url, {
                 attribution: "Bron: IIIF"
