@@ -1,4 +1,19 @@
 document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("load-iiif").addEventListener("click", () => {
+        console.log("🟢 Knop geklikt!");
+    
+        const infoUrl = document.getElementById("info-json-url").value.trim();
+        
+        if (!infoUrl) {
+            console.error("❌ Geen info.json URL ingevoerd.");
+            alert("Voer een geldige IIIF info.json URL in!");
+            return;
+        }
+    
+        console.log(`🔄 Laden van IIIF-afbeelding van: ${infoUrl}`);
+        loadIIIFLayer(infoUrl);
+    });
+
     const map = L.map("map", {
         center: [0, 0], 
         zoom: 1,
