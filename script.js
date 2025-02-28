@@ -1,3 +1,12 @@
+function resizeCanvas() {
+    mapCanvas.width = window.innerWidth;
+    mapCanvas.height = window.innerHeight;
+    regenerateGrid();
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
 document.addEventListener("DOMContentLoaded", () => {
     const mapCanvas = document.getElementById('mapCanvas');
     const ctx = mapCanvas.getContext('2d');
