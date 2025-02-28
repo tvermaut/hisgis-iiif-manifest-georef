@@ -1,14 +1,10 @@
 document.addEventListener("DOMContentLoaded", async () => {
     const infoJsonUrlInput = document.getElementById('info-json-url');
-    const scaleSelect = document.getElementById('scale-select');
-    const generateGridButton = document.getElementById('generate-grid');
-    const xAxisValue = document.getElementById('x-axis-value');
-    const yAxisValue = document.getElementById('y-axis-value');
 
     let map = L.map('map', {
-        center: [0, 0],
-        zoom: 2,
-        crs: L.CRS.Simple
+        center: [0, 0],  // Leaflet-IIIF coördinaten beginnen meestal rond (0,0)
+        zoom: 1,
+        crs: L.CRS.Simple  // Gebruik Simple CRS omdat IIIF geen geografische coördinaten heeft
     });
 
     let iiifLayer;
@@ -22,31 +18,27 @@ document.addEventListener("DOMContentLoaded", async () => {
                 map.removeLayer(iiifLayer);
             }
 
-            console.log()
-
             iiifLayer = L.tileLayer.iiif(url, {
-                attribution: "Bron: IIIF"
+                tileSize: data.tiles[0].width,  // Correcte tile-grootte ophalen
+                attribution: "Bron: IIIF",
+                fitBounds: true  // Automatisch zoomen naar het volledige beeld
             });
 
             iiifLayer.addTo(map);
-            map.fitBounds(iiifLayer.getBounds());
         } catch (error) {
             console.error("Fout bij laden van IIIF:", error);
         }
     }
 
-    infoJsonUrlInput.addEventListener("input", () => {
+    // Automatisch laden wanneer een URL wordt ingevoerd
+    infoJsonUrlInput.addEventListener("change", () => {
         const newUrl = infoJsonUrlInput.value.trim();
         if (newUrl) {
             loadIIIFLayer(newUrl);
         }
     });
 
-    generateGridButton.addEventListener("click", () => {
-        console.log("Grid genereren op:", xAxisValue.value, yAxisValue.value);
-    });
-
-    // Check of een info.json URL in de GET-parameters zit
+    // Controleer GET-parameter 'infoJsonUrl'
     const urlParams = new URLSearchParams(window.location.search);
     const paramUrl = urlParams.get("infoJsonUrl");
     if (paramUrl) {
