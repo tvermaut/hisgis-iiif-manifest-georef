@@ -8,6 +8,7 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -16,7 +17,7 @@
         <div id="map" style="width: 75vw; height: 100vh; float: left;"></div>
 
         <!-- Controlepaneel -->
-        <div id="controls" style="width: 25vw; height: 100vh; float: right; padding: 10px; overflow-y: auto;">
+        <div id="controls">
             <h1>Historische Kaart Editor</h1>
 
             <label for="info-json-url">IIIF info.json URL:</label>
@@ -29,18 +30,22 @@
                 <option value="5000">1:5000</option>
             </select>
 
-            <label for="x-axis-value">X-as waarde:</label>
-            <input type="number" id="x-axis-value" placeholder="X-as waarde">
+            <div class="input-group">
+                <label for="x-axis-value">X-as waarde:</label>
+                <input type="number" id="x-axis-value" placeholder="X" class="small-input">
+                <button id="draw-x-axis" class="edit-btn">✏️</button>
+            </div>
 
-            <label for="y-axis-value">Y-as waarde:</label>
-            <input type="number" id="y-axis-value" placeholder="Y-as waarde">
+            <div class="input-group">
+                <label for="y-axis-value">Y-as waarde:</label>
+                <input type="number" id="y-axis-value" placeholder="Y" class="small-input">
+                <button id="draw-y-axis" class="edit-btn">✏️</button>
+            </div>
 
             <button id="generate-grid">Genereer Ruitkruisnet</button>
         </div>
     </div>
 
-    <!-- Leaflet JavaScript -->
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="leaflet-iiif.js"></script>
     <script src="script.js"></script>
 
