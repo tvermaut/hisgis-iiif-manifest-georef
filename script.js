@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Initialiseer Leaflet-kaart
     const map = L.map("map", {
-        center: [0, 0], // Coördinaten worden later aangepast
+        center: [0, 0], // Wordt aangepast zodra de afbeelding wordt geladen
         zoom: 1,
         crs: L.CRS.Simple,
         preferCanvas: true,
@@ -61,10 +61,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     map.removeLayer(window.iiifLayer);
                 }
 
-                // **Correcte** IIIF Tile URL-opbouw
+                // **Correcte** IIIF Tile URL-opbouw als **functie**
                 function constructIIIFTileUrl(coords) {
                     const zoomLevel = scaleFactors.find(factor => factor === Math.pow(2, maxZoom - coords.z));
-                    if (!zoomLevel) return ""; // Vermijd ongeldige requests
+                    if (!zoomLevel) return "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
 
                     const tileX = coords.x * tileSize * zoomLevel;
                     const tileY = coords.y * tileSize * zoomLevel;
@@ -72,10 +72,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     const tileH = Math.min(tileSize * zoomLevel, imageHeight - tileY);
 
                     if (tileX >= imageWidth || tileY >= imageHeight || tileX < 0 || tileY < 0) {
-                        return "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; // Voorkom fouten
+                        return "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
                     }
 
-                    return `${baseUrl}/${tileX},${tileY},${tileW},${tileH}/256,/0/default.jpg`;
+                    return `${baseUrl}/${tileX},${tileY},${tileW},${tileH}/full/0/default.jpg`;
                 }
 
                 // Maak een nieuwe IIIF-laag aan
