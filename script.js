@@ -7,7 +7,23 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Functie: Genereren van ruitkruisnet
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    const mapCanvas = document.getElementById('mapCanvas');
+    const ctx = mapCanvas.getContext('2d');
+    const scaleSelect = document.getElementById('scale-select');
+    const generateGridButton = document.getElementById('generate-grid');
+    const xAxisValue = document.getElementById('x-axis-value');
+    const yAxisValue = document.getElementById('y-axis-value');
+    const infoJsonUrlInput = document.getElementById('info-json-url');
+
+    let scale = 2500;
+    let xAxis = 0;
+    let yAxis = 0;
+    let infoJsonUrl = "";
+
+    // Functie: Genereren van ruitkruisnet
 function regenerateGrid() {
     ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
 
@@ -31,12 +47,20 @@ function regenerateGrid() {
     }
 }
 
-// Functie: Canvas aanpassen aan venstergrootte
 function resizeCanvas() {
     mapCanvas.width = window.innerWidth;
     mapCanvas.height = window.innerHeight;
-    regenerateGrid();
+    
+    // Controleer of regenerateGrid bestaat voordat we het aanroepen
+    if (typeof regenerateGrid === 'function') {
+        regenerateGrid();
+    } else {
+        console.warn("regenerateGrid is nog niet gedefinieerd.");
+    }
 }
+
+// Roep resizeCanvas alleen aan als het script volledig geladen is
+window.addEventListener('resize', resizeCanvas);
 
 // Functie: Ophalen van info.json URL en kaart laden
 function loadMap() {
@@ -45,20 +69,6 @@ function loadMap() {
         loadTilesFromIIIF(infoJsonUrl);
     }
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-    const mapCanvas = document.getElementById('mapCanvas');
-    const ctx = mapCanvas.getContext('2d');
-    const scaleSelect = document.getElementById('scale-select');
-    const generateGridButton = document.getElementById('generate-grid');
-    const xAxisValue = document.getElementById('x-axis-value');
-    const yAxisValue = document.getElementById('y-axis-value');
-    const infoJsonUrlInput = document.getElementById('info-json-url');
-
-    let scale = 2500;
-    let xAxis = 0;
-    let yAxis = 0;
-    let infoJsonUrl = "";
 
     // Event: Canvas aanpassen bij vensterverandering
     window.addEventListener('resize', resizeCanvas);
