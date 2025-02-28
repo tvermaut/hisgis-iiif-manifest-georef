@@ -148,13 +148,12 @@ class AxisEditor {
 // Wacht tot de DOM geladen is voordat we de editor starten
 document.addEventListener('DOMContentLoaded', () => {
     const map = L.map('map', {
+        center: [0, 0],
+        zoom: 1,
         crs: L.CRS.Simple, // Gebruik een eigen orthogonaal stelsel
         minZoom: -2, // Minimaal zoomniveau
         maxZoom: 10, // Maximaal zoomniveau
-        zoomControl: false, // Geen standaard zoomknoppen
     });
-
-    // Zorg dat je geen map.setView gebruikt!
 
     // Start de AxisEditor
     const editor = new AxisEditor(map);
