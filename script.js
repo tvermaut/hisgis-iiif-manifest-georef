@@ -39,57 +39,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function loadIIIFLayer(infoUrl) {
-        fetch(infoUrl)
-            .then(response => response.json())
-            .then(data => {
-                console.log("✅ JSON Response:", data);
+        // Verwijder vorige IIIF-laag als die bestaat
+        if (window.iiifLayer) {
+            map.removeLayer(window.iiifLayer);
+        }
 
-                const baseUrl = data["@id"];
-                const tileSize = data.tiles[0].width || 256;  // Meestal 256
-                const scaleFactors = data.tiles[0].scaleFactors;
-                const maxZoom = Math.max(...scaleFactors);
-                const imageWidth = data.width;
-                const imageHeight = data.height;
+        // **Gebruik Leaflet-IIIF om de afbeelding correct te laden**
+        window.iiifLayer = L.tileLayer.iiif(infoUrl, {
+            fitBounds: true,  // Automatisch inzoomen op de afbeelding
+            setMaxBounds: true,  // Zorgt dat de gebruiker niet buiten de afbeelding kan scrollen
+        }).addTo(map);
 
-                console.log("ℹ️ Base URL:", baseUrl);
-                console.log("ℹ️ Tile Size:", tileSize);
-                console.log("ℹ️ Max Zoom Level:", maxZoom);
-                console.log("ℹ️ Image Dimensions:", imageWidth, "x", imageHeight);
-
-                // Verwijder vorige IIIF-laag als die bestaat
-                if (window.iiifLayer) {
-                    map.removeLayer(window.iiifLayer);
-                }
-
-                // **Correcte** IIIF Tile URL-opbouw als **functie**
-                function constructIIIFTileUrl(coords) {
-                    const zoomLevel = scaleFactors.find(factor => factor === Math.pow(2, maxZoom - coords.z));
-                    if (!zoomLevel) return "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-
-                    const tileX = coords.x * tileSize * zoomLevel;
-                    const tileY = coords.y * tileSize * zoomLevel;
-                    const tileW = Math.min(tileSize * zoomLevel, imageWidth - tileX);
-                    const tileH = Math.min(tileSize * zoomLevel, imageHeight - tileY);
-
-                    if (tileX >= imageWidth || tileY >= imageHeight || tileX < 0 || tileY < 0) {
-                        return "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-                    }
-
-                    return `${baseUrl}/${tileX},${tileY},${tileW},${tileH}/full/0/default.jpg`;
-                }
-
-                // Maak een nieuwe IIIF-laag aan
-                window.iiifLayer = L.tileLayer(constructIIIFTileUrl, {
-                    tileSize: tileSize,
-                    maxZoom: maxZoom,
-                    noWrap: true,
-                    bounds: [[0, 0], [imageHeight, imageWidth]],
-                });
-
-                map.addLayer(window.iiifLayer);
-                map.fitBounds([[0, 0], [imageHeight, imageWidth]]);
-                console.log("✅ IIIF-kaartlaag succesvol geladen!");
-            })
-            .catch(error => console.error("❌ Fout bij laden van IIIF:", error));
+        console.log("✅ IIIF-kaartlaag succesvol geladen!");
     }
 });
