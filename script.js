@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Gebruik de info.json URL om de IIIF image laag te laden
             try {
                 // Voeg de IIIF image layer toe met L.TileLayer.iiif
-                this.iiifLayer = L.TileLayer.iiif(infoJsonUrl, {
+                this.iiifLayer = L.TileLayer.Iiif(infoJsonUrl, {
                     bounds: [[0, 0], [this.map.getSize().y, this.map.getSize().x]],  // Zorg ervoor dat de kaart een grootte heeft
                     minZoom: 0,
                     maxZoom: 5,  // Pas de zoomniveaus aan zoals nodig
