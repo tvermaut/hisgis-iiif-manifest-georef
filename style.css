@@ -84,3 +84,14 @@ button:hover {
     border-radius: 50%;
     border: 2px solid white;
 }
+.axis-marker {
+    color: black;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1;
+}
+
+.leaflet-interactive {
+    cursor: crosshair;
+}
