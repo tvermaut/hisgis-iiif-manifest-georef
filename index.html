@@ -27,12 +27,25 @@
             <div class="axis-controls">
                 <label>X-as:</label>
                 <button id="draw-x-axis" title="Teken X-as">❌</button>
+                <label for="x-axis-value">X-as waarde (m):</label>
+                <input type="number" id="x-axis-value" value="0">
             </div>
 
             <div class="axis-controls">
                 <label>Y-as:</label>
                 <button id="draw-y-axis" title="Teken Y-as">🔷</button>
+                <label for="y-axis-value">Y-as waarde (m):</label>
+                <input type="number" id="y-axis-value" value="0">
             </div>
+
+            <div class="axis-controls"></div>
+                <label for="map-scale">Kaartschaal:</label>
+                <select id="map-scale">
+                    <option value="2500">1:2500</option>
+                    <option value="1250">1:1250</option>
+                    <option value="5000">1:5000</option>
+                </select>
+                </div>
         </div>
     </div>    
 
