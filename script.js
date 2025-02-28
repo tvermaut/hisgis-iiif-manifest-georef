@@ -36,6 +36,44 @@ document.getElementById("load-iiif").addEventListener("click", () => {
     loadIIIFLayer(infoUrl);
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("load-iiif").addEventListener("click", () => {
+        console.log("🟢 Knop geklikt!");
+    
+        const infoUrl = document.getElementById("info-json-url").value.trim();
+        
+        if (!infoUrl) {
+            console.error("❌ Geen info.json URL ingevoerd.");
+            alert("Voer een geldige IIIF info.json URL in!");
+            return;
+        }
+    
+        console.log(`🔄 Laden van IIIF-afbeelding van: ${infoUrl}`);
+        loadIIIFLayer(infoUrl);
+    });
+
+    if (!infoUrl.startsWith("http")) {
+        console.error("❌ Ongeldige URL!");
+        return;
+    }
+
+    if (window.iiifLayer) {
+        console.log("🗑️ Oude IIIF-laag verwijderen...");
+        map.removeLayer(window.iiifLayer);
+    }
+
+    try {
+        window.iiifLayer = L.tileLayer.iiif(infoUrl, {
+            fitBounds: true,
+            setMaxBounds: true,
+        }).addTo(map);
+        console.log("✅ IIIF-kaartlaag geladen!");
+    } catch (error) {
+        console.error("🚨 Fout bij laden IIIF-laag:", error);
+    }
+
+
+
     const map = L.map("map", {
         center: [0, 0], 
         zoom: 1,
