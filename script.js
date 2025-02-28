@@ -129,7 +129,7 @@ class AxisEditor {
                 const tileSize = tiles[0].width;
 
                 // Laad de IIIF laag dynamisch met de verkregen eigenschappen
-                const iiifLayer = L.tileLayer(`${info["@id"]}/{z}/{x}/{-y}.jpg`, {
+                const iiifLayer = L.tileLayer.iiif(url, {
                     bounds: [[0, 0], [height, width]],
                     tileSize: tileSize,
                     minZoom: -2,
