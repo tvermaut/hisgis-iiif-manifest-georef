@@ -27,8 +27,10 @@ function loadImage() {
     });
 
     viewer.addHandler('update-viewport', function() {
+        lines.forEach(line => {
+            updateLine(line.overlay, line.start, line.end);
+        });
         updateMarkers();
-        updateLines();
     });
 }
 
@@ -80,50 +82,40 @@ function startDrawLine(lineType) {
 }
 
 function drawLine(start, end, lineType) {
-    // Maak een SVG-element aan
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.style.position = 'absolute';
-    svg.style.width = '100%';
-    svg.style.height = '100%';
-    svg.style.left = '0';
-    svg.style.top = '0';
-    svg.style.pointerEvents = 'none'; // Zorg ervoor dat de SVG niet interactief is
+    const line = document.createElement('div');
+    line.style.position = 'absolute';
+    line.style.backgroundColor = lineType === 'x' ? 'red' : 'blue';
+    line.style.height = '2px'; // Verander width naar height
+    line.style.transformOrigin = '0 50%'; // Verander naar midden-links
 
-    // Maak een lijn binnen de SVG
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('stroke', lineType === 'x' ? 'red' : 'blue'); // Stel de kleur in
-    line.setAttribute('stroke-width', '2'); // Stel de dikte van de lijn in
-
-    svg.appendChild(line);
-
-    // Voeg de SVG toe aan de viewer als overlay
     const overlay = {
-        element: svg,
-        location: new OpenSeadragon.Rect(0, 0, 1, 1), // Dummy locatie (we updaten dit later)
+        element: line,
+        location: new OpenSeadragon.Rect(start.x, start.y, 0, 0), // Begin met een punt
         placement: OpenSeadragon.Placement.TOP_LEFT
     };
 
     viewer.addOverlay(overlay);
-
-    // Update de lijn met de juiste coördinaten
     updateLine(overlay, start, end);
 
     return overlay;
 }
 
 function updateLine(lineOverlay, start, end) {
-    // Converteer start- en eindpunten naar viewport-pixels
-    const startPixel = viewer.viewport.pixelFromPoint(start);
-    const endPixel = viewer.viewport.pixelFromPoint(end);
+    const startPixel = viewer.viewport.viewportToViewerElementCoordinates(start);
+    const endPixel = viewer.viewport.viewportToViewerElementCoordinates(end);
+    
+    const dx = endPixel.x - startPixel.x;
+    const dy = endPixel.y - startPixel.y;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
-    // Pas de lijn aan binnen het SVG-element
-    const line = lineOverlay.element.querySelector('line');
-    line.setAttribute('x1', startPixel.x);
-    line.setAttribute('y1', startPixel.y);
-    line.setAttribute('x2', endPixel.x);
-    line.setAttribute('y2', endPixel.y);
+    lineOverlay.element.style.width = `${length}px`; // Gebruik pixels in plaats van percentage
+    lineOverlay.element.style.transform = `rotate(${angle}deg)`;
+    
+    // Update de locatie van de overlay naar het startpunt
+    lineOverlay.location.x = start.x;
+    lineOverlay.location.y = start.y;
 
-    // Zorg ervoor dat het overlay-element correct wordt bijgewerkt
     viewer.updateOverlay(lineOverlay);
 }
 
