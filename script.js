@@ -68,6 +68,25 @@ document.addEventListener("DOMContentLoaded", () => {
             this.markers = {};
         }
 
+        startDrawingAxis(id, color) {
+            console.log(`🎯 Start tekenen van ${id}-as...`);
+            
+            let points = [];
+            
+            const clickHandler = (event) => {
+                points.push(event.latlng);
+                console.log(`📌 Punt ${points.length} gezet op:`, event.latlng);
+                
+                if (points.length === 2) {
+                    this.addOrUpdateAxis(id, points[0], points[1], color);
+                    this.map.off("click", clickHandler);
+                    console.log(`✅ ${id}-as getekend!`);
+                }
+            };
+        
+            this.map.on("click", clickHandler);
+        }
+
         addOrUpdateAxis(id, start, end, color) {
             if (this.axes[id]) {
                 this.map.removeLayer(this.axes[id]);
