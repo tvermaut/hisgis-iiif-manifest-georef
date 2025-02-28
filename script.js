@@ -85,13 +85,13 @@ function drawLine(start, end, lineType) {
     const line = document.createElement('div');
     line.style.position = 'absolute';
     line.style.backgroundColor = lineType === 'x' ? 'red' : 'blue';
-    line.style.height = '2px'; // Verander width naar height
-    line.style.transformOrigin = '0 50%'; // Verander naar midden-links
+    line.style.height = '2px';
+    line.style.transformOrigin = '0 50%';
 
     const overlay = {
         element: line,
-        location: new OpenSeadragon.Rect(start.x, start.y, 0, 0), // Begin met een punt
-        placement: OpenSeadragon.Placement.TOP_LEFT
+        location: new OpenSeadragon.Rect(start.x, start.y, end.x - start.x, end.y - start.y),
+        placement: OpenSeadragon.OverlayPlacement.TOP_LEFT
     };
 
     viewer.addOverlay(overlay);
@@ -101,20 +101,21 @@ function drawLine(start, end, lineType) {
 }
 
 function updateLine(lineOverlay, start, end) {
-    const startPixel = viewer.viewport.viewportToViewerElementCoordinates(start);
-    const endPixel = viewer.viewport.viewportToViewerElementCoordinates(end);
+    const viewportWidth = viewer.viewport.getContainerSize().x;
+    const zoom = viewer.viewport.getZoom();
     
-    const dx = endPixel.x - startPixel.x;
-    const dy = endPixel.y - startPixel.y;
-    const length = Math.sqrt(dx * dx + dy * dy);
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const length = Math.sqrt(dx * dx + dy * dy) * viewportWidth * zoom;
     const angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
-    lineOverlay.element.style.width = `${length}px`; // Gebruik pixels in plaats van percentage
+    lineOverlay.element.style.width = `${length}px`;
     lineOverlay.element.style.transform = `rotate(${angle}deg)`;
     
-    // Update de locatie van de overlay naar het startpunt
     lineOverlay.location.x = start.x;
     lineOverlay.location.y = start.y;
+    lineOverlay.location.width = end.x - start.x;
+    lineOverlay.location.height = end.y - start.y;
 
     viewer.updateOverlay(lineOverlay);
 }
