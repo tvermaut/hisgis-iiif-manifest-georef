@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IIIF Viewer met Leaflet</title>
+    <title>IIIF Viewer met Leaflet en Assen</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet-iiif@3.0.0/leaflet-iiif.min.js"></script>
@@ -28,6 +28,7 @@
     <div id="controls">
         <input type="text" id="infoJsonUrl" placeholder="Voer info.json URL in" size="50">
         <button onclick="loadImage()">Laad afbeelding</button>
+        <button onclick="startDrawingAxes()">Teken assen</button>
     </div>
     <div id="map"></div>
 
@@ -37,6 +38,10 @@
             crs: L.CRS.Simple,
             zoom: 0
         });
+
+        var axesLayer;
+        var clickCount = 0;
+        var point1, point2;
 
         function loadImage() {
             var infoJsonUrl = document.getElementById('infoJsonUrl').value;
@@ -56,6 +61,42 @@
             } else {
                 alert('Voer een geldige info.json URL in');
             }
+        }
+
+        function startDrawingAxes() {
+            clickCount = 0;
+            map.on('click', onMapClick);
+            alert('Klik twee punten op de afbeelding om de assen te tekenen.');
+        }
+
+        function onMapClick(e) {
+            if (clickCount == 0) {
+                point1 = e.latlng;
+                clickCount++;
+            } else if (clickCount == 1) {
+                point2 = e.latlng;
+                map.off('click', onMapClick);
+                promptForCoordinates();
+            }
+        }
+
+        function promptForCoordinates() {
+            var yCoord = prompt("Voer Y-coördinaat in voor X-as:");
+            var xCoord = prompt("Voer X-coördinaat in voor Y-as:");
+            drawAxes(parseFloat(yCoord), parseFloat(xCoord));
+        }
+
+        function drawAxes(yCoord, xCoord) {
+            if (axesLayer) {
+                map.removeLayer(axesLayer);
+            }
+            axesLayer = L.layerGroup().addTo(map);
+
+            // Teken X-as
+            L.polyline([[yCoord, point1.lng], [yCoord, point2.lng]], {color: 'red'}).addTo(axesLayer);
+            
+            // Teken Y-as
+            L.polyline([[point1.lat, xCoord], [point2.lat, xCoord]], {color: 'blue'}).addTo(axesLayer);
         }
     </script>
 </body>
