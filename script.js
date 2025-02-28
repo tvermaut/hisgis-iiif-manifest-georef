@@ -1,10 +1,16 @@
 document.addEventListener("DOMContentLoaded", async () => {
     const infoJsonUrlInput = document.getElementById('info-json-url');
 
-    let map = L.map('map', {
-        center: [0, 0],  // Leaflet-IIIF coördinaten beginnen meestal rond (0,0)
+    // Controleer of er al een Leaflet-kaart bestaat en verwijder deze
+    if (window.map !== undefined) {
+        window.map.remove();
+    }
+
+    // Initialiseer Leaflet-kaart
+    window.map = L.map('map', {
+        center: [0, 0],
         zoom: 1,
-        crs: L.CRS.Simple  // Gebruik Simple CRS omdat IIIF geen geografische coördinaten heeft
+        crs: L.CRS.Simple
     });
 
     let iiifLayer;
@@ -15,22 +21,21 @@ document.addEventListener("DOMContentLoaded", async () => {
             const data = await response.json();
 
             if (iiifLayer) {
-                map.removeLayer(iiifLayer);
+                window.map.removeLayer(iiifLayer);
             }
 
             iiifLayer = L.tileLayer.iiif(url, {
-                tileSize: data.tiles[0].width,  // Correcte tile-grootte ophalen
+                tileSize: data.tiles[0].width,
                 attribution: "Bron: IIIF",
-                fitBounds: true  // Automatisch zoomen naar het volledige beeld
+                fitBounds: true
             });
 
-            iiifLayer.addTo(map);
+            iiifLayer.addTo(window.map);
         } catch (error) {
             console.error("Fout bij laden van IIIF:", error);
         }
     }
 
-    // Automatisch laden wanneer een URL wordt ingevoerd
     infoJsonUrlInput.addEventListener("change", () => {
         const newUrl = infoJsonUrlInput.value.trim();
         if (newUrl) {
