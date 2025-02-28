@@ -93,3 +93,35 @@ button:hover {
 .leaflet-interactive {
     cursor: default; /* Geen handje bij lijnen */
 }
+
+#control-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Extra ruimte tussen items */
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    width: 300px;
+}
+
+#control-panel div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#control-panel button {
+    padding: 5px 10px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+#control-panel input {
+    width: 100px;
+}
+
+#measured-scale, #rotation-angle {
+    font-weight: bold;
+    color: #333;
+}
