@@ -41,7 +41,7 @@
 </head>
 <body>
     <div id="map"></div>
-    <input type="text" id="url-input" placeholder="Voer afbeelding URL in">
+    <input type="text" id="url-input" placeholder="Voer basis-URL in">
     <button id="load-button">Laad info.json</button>
     <button id="draw-x-axis">Teken X-as</button>
     <button id="draw-y-axis">Teken Y-as</button>
@@ -72,19 +72,37 @@
         document.getElementById('draw-y-axis').addEventListener('click', startDrawYAxis);
 
         function loadInfoJson() {
-            fetch('info.json')
-                .then(response => response.json())
+            const baseUrl = document.getElementById('url-input').value.trim();
+            if (!baseUrl) {
+                alert('Voer eerst een basis-URL in');
+                return;
+            }
+
+            const infoJsonUrl = baseUrl + '/info.json';
+
+            fetch(infoJsonUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (imageLayer) {
                         map.removeLayer(imageLayer);
                     }
-                    imageLayer = L.imageOverlay(data.url, [[0, 0], [data.height, data.width]]).addTo(map);
+                    const imageUrl = baseUrl + '/' + data.url;
+                    imageLayer = L.imageOverlay(imageUrl, [[0, 0], [data.height, data.width]]).addTo(map);
                     map.fitBounds([[0, 0], [data.height, data.width]]);
 
                     if (canvas) {
                         map.removeLayer(canvas);
                     }
                     canvas = L.canvas().addTo(map);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Er is een fout opgetreden bij het laden van info.json');
                 });
         }
 
