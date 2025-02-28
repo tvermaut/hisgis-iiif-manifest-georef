@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Zorg ervoor dat de IIIF plugin beschikbaar is
                 if (L.TileLayer.Iiif) {
                     // Laag toevoegen met info.json URL
-                    this.iiifLayer = L.TileLayer.Iiif(infoJsonUrl, {
+                    this.iiifLayer = L.TileLayer.iiif(infoJsonUrl, {
                         minZoom: 0,
                         maxZoom: 5,
                         continuousWorld: true,
