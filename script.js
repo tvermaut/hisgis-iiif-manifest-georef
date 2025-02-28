@@ -21,33 +21,37 @@ document.addEventListener("DOMContentLoaded", () => {
         zoom: 1,
         crs: L.CRS.Simple,
         preferCanvas: true,
+        minZoom: -5, // Laat verder uitzoomen toe
+        maxZoom: 5   // Laat verder inzoomen toe
     });
 
     console.log("✅ Leaflet-kaart succesvol geïnitialiseerd!");
 
     function loadIIIFLayer(infoUrl) {
         console.log(`🔄 Probeer IIIF-laag te laden van: ${infoUrl}`);
-
+    
         if (!infoUrl.startsWith("http")) {
             console.error("❌ Ongeldige URL!");
             return;
         }
-
+    
         if (window.iiifLayer) {
             console.log("🗑️ Oude IIIF-laag verwijderen...");
             map.removeLayer(window.iiifLayer);
         }
-
+    
         try {
             window.iiifLayer = L.tileLayer.iiif(infoUrl, {
                 fitBounds: true,
-                setMaxBounds: true,
             }).addTo(map);
+    
+            // Sta toe om buiten de afbeelding te pannen
+            map.setMaxBounds(null);  // Verwijder bounding box
             console.log("✅ IIIF-kaartlaag geladen!");
         } catch (error) {
             console.error("🚨 Fout bij laden IIIF-laag:", error);
         }
-    }
+    }    
 
     document.getElementById("load-iiif").addEventListener("click", () => {
         console.log("📥 Load-knop geklikt!");
@@ -91,18 +95,31 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         addOrUpdateAxis(id, start, end, color) {
+            console.log(`🔄 Bijwerken van as: ${id}`);
+        
+            if (!start || !end) {
+                console.error(`❌ Ongeldige start- of eindpositie voor as ${id}.`);
+                return;
+            }
+        
+            // Verwijder bestaande lijn en markers als die al bestaan
             if (this.axes[id]) {
+                console.log(`🗑️ Oude lijn en markers verwijderen voor as ${id}`);
                 this.map.removeLayer(this.axes[id]);
                 this.removeMarkers(id);
             }
-    
+        
+            // Teken de nieuwe lijn
             this.axes[id] = L.polyline([start, end], { color, weight: 3 }).addTo(this.map);
-    
+            console.log(`✅ As ${id} succesvol getekend: ${JSON.stringify(this.axes[id].getLatLngs())}`);
+        
+            // Voeg de markers toe
             this.addDraggableMarker(id, start, color, "start");
             this.addDraggableMarker(id, end, color, "end");
-    
+        
+            // Controleer of het grid getekend kan worden
             this.checkAndGenerateGrid();
-        }
+        }        
     
         removeMarkers(id) {
             if (this.markers[id]) {
