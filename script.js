@@ -1,8 +1,6 @@
-window.onload = function () {
-    const infoJsonUrlInput = document.getElementById('info-json-url');
-
-    // Controleer of het map-element bestaat
+document.addEventListener("DOMContentLoaded", () => {
     const mapElement = document.getElementById('map');
+
     if (!mapElement) {
         console.error("Fout: 'map' container niet gevonden.");
         return;
@@ -43,6 +41,8 @@ window.onload = function () {
         }
     }
 
+    const infoJsonUrlInput = document.getElementById('info-json-url');
+
     infoJsonUrlInput.addEventListener("change", () => {
         const newUrl = infoJsonUrlInput.value.trim();
         if (newUrl) {
@@ -57,4 +57,4 @@ window.onload = function () {
         infoJsonUrlInput.value = paramUrl;
         loadIIIFLayer(paramUrl);
     }
-};
+});
