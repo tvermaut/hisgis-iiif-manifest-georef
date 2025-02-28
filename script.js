@@ -1,192 +1,161 @@
-document.addEventListener("DOMContentLoaded", () => {
-    console.log("✅ DOM is volledig geladen!");
-
-    if (typeof L === "undefined") {
-        console.error("❌ Leaflet (L) is niet beschikbaar. Controleer of leaflet.js correct wordt geladen!");
-        return;
-    } else {
-        console.log("✅ Leaflet is correct geladen.");
+// Klasse voor de axis-editor
+class AxisEditor {
+    constructor(map) {
+        this.map = map;
+        this.axes = {};
+        this.currentAxisId = null;
+        this.currentDrawing = false;
+        this.init();
     }
 
-    const mapElement = document.getElementById("map");
-    if (!mapElement) {
-        console.error("❌ Fout: 'map' container niet gevonden.");
-        return;
-    } else {
-        console.log("✅ 'map' container gevonden.");
+    init() {
+        console.log("✅ DOM is volledig geladen!");
+        this.map.on('click', this.handleMapClick.bind(this));
+
+        // Event-listeners voor het tekenen van assen
+        document.getElementById('draw-x-axis').addEventListener('click', () => {
+            this.startDrawingAxis('x-axis');
+        });
+
+        document.getElementById('draw-y-axis').addEventListener('click', () => {
+            this.startDrawingAxis('y-axis');
+        });
+
+        document.getElementById('draw-x-axis-2').addEventListener('click', () => {
+            this.startDrawingAxis('x-axis-2');
+        });
+
+        // Event-listener voor het laden van IIIF afbeelding
+        document.getElementById('load-iiif').addEventListener('click', () => {
+            const url = document.getElementById('info-json-url').value;
+            this.loadIIIFLayer(url);
+        });
     }
 
-    const map = L.map("map", {
-        center: [0, 0],
-        zoom: 1,
-        crs: L.CRS.Simple,
-        preferCanvas: true,
-        maxZoom: 10, 
-        minZoom: -2, 
-    });
+    // Methode voor het starten van het tekenen van een as
+    startDrawingAxis(axisId) {
+        console.log(`✏️ ${axisId} tekenen...`);
+        this.currentAxisId = axisId;
+        this.currentDrawing = true;
+        this.axes[axisId] = []; // Nieuwe as toevoegen
 
-    console.log("✅ Leaflet-kaart succesvol geïnitialiseerd!");
+        // Verander de cursor naar een crosshair om duidelijk te maken dat je aan het tekenen bent
+        this.map.getContainer().style.cursor = 'crosshair';
+    }
 
-    class AxisEditor {
-        constructor(map) {
-            this.map = map;
-            this.axes = {};
-            this.gridLayer = null;
-            this.drawingAxis = false;
-            this.currentAxisId = null;
-            this.currentAxisColor = null;
-            this.currentAxisPoints = [];
-            this.iiifLayer = null;
+    // Methode voor het afhandelen van clicks op de kaart
+    handleMapClick(event) {
+        if (!this.currentDrawing) return;
+
+        const latlng = event.latlng;
+        console.log(`🖱️ Klik geregistreerd op: ${latlng}`);
+
+        // Voeg de aangeklikte positie toe aan de lijst van punten van de huidige as
+        this.axes[this.currentAxisId].push(latlng);
+
+        // Teken de as als er twee punten zijn aangeklikt
+        if (this.axes[this.currentAxisId].length === 2) {
+            this.addOrUpdateAxis(this.currentAxisId, this.axes[this.currentAxisId], 'blue');
+            this.currentDrawing = false;
+            this.map.getContainer().style.cursor = ''; // Terug naar de standaardcursor
         }
+    }
 
-        startDrawingAxis(axisId, color) {
-            this.drawingAxis = true;
-            this.currentAxisId = axisId;
-            this.currentAxisColor = color;
-            this.currentAxisPoints = [];
-            console.log(`✏️ Start met tekenen van ${axisId} as`);
+    // Methode voor het toevoegen of updaten van een as
+    addOrUpdateAxis(axisId, latlngs, color) {
+        // Verwijder oude markers als er al een as is getekend
+        this.removeMarkers(axisId);
 
-            // Verwijder bestaande markers en lijnen van dezelfde as
-            if (this.axes[axisId]) {
-                this.map.removeLayer(this.axes[axisId]);
-            }
-        }
+        // Maak een nieuwe polyline aan voor de as
+        const polyline = L.polyline(latlngs, { color: color, weight: 2 }).addTo(this.map);
 
-        handleMapClick(event) {
-            if (!this.drawingAxis) return;
+        // Voeg markers toe aan het begin en het einde van de lijn
+        this.addMarkersToLine(polyline, color);
 
-            const latlng = event.latlng;
-            this.currentAxisPoints.push(latlng);
-            
-            if (this.currentAxisPoints.length === 2) {
-                // Teken de lijn
-                this.addOrUpdateAxis(this.currentAxisId, this.currentAxisPoints[0], this.currentAxisPoints[1], this.currentAxisColor);
-                this.drawingAxis = false;  // Stop met tekenen
-                this.checkAndGenerateGrid();
-            }
-        }
+        // Sla de lijn op in de axes
+        this.axes[axisId] = polyline;
+    }
 
-        addOrUpdateAxis(id, start, end, color) {
-            // Verwijder oude lijn als deze bestaat
-            if (this.axes[id]) {
-                this.map.removeLayer(this.axes[id]);
-            }
-            this.axes[id] = L.polyline([start, end], { color, weight: 3 }).addTo(this.map);
-
-            this.checkAndGenerateGrid();
-        }
-
-        checkAndGenerateGrid() {
-            if (this.axes['x'] && this.axes['x2'] && this.axes['y']) {
-                this.generateGrid();
-                this.calculateScale();
-                this.calculateRotation();
-            }
-        }
-
-        generateGrid() {
-            if (this.gridLayer) {
-                this.map.removeLayer(this.gridLayer);
-            }
-
-            const xStart = this.axes['x'].getLatLngs()[0];
-            const xEnd = this.axes['x2'].getLatLngs()[0];
-            const yStart = this.axes['y'].getLatLngs()[0];
-
-            const pixelPerMeter = Math.abs(xEnd.lng - xStart.lng) / (parseFloat(document.getElementById("x-axis-2-value").value) || 1);
-            console.log(`📏 Pixels per meter: ${pixelPerMeter}`);
-
-            if (!pixelPerMeter || pixelPerMeter <= 0) {
-                console.warn("⚠️ Ongeldige pixels per meter waarde. Grid wordt niet gegenereerd.");
-                return;
-            }
-
-            let gridLines = [];
-
-            for (let i = -10; i <= 10; i++) {
-                let xOffset = xStart.lng + i * 10 * pixelPerMeter;
-                let yOffset = yStart.lat + i * 10 * pixelPerMeter;
-
-                gridLines.push(L.polyline([
-                    [yOffset, xStart.lng - 100 * pixelPerMeter],
-                    [yOffset, xStart.lng + 100 * pixelPerMeter]
-                ], { color: "gray", weight: 1, opacity: 0.5 }));
-            }
-
-            this.gridLayer = L.layerGroup(gridLines).addTo(this.map);
-            console.log("✅ Grid succesvol gegenereerd!");
-        }
-
-        calculateScale() {
-            const xStart = this.axes['x'].getLatLngs()[0];
-            const xEnd = this.axes['x2'].getLatLngs()[0];
-            const fieldMeters = parseFloat(document.getElementById("x-axis-2-value").value) || 1;
-
-            const pixelDistance = Math.abs(xEnd.lng - xStart.lng);
-            const metersPerPixel = fieldMeters / pixelDistance;
-            const dpi = 300;
-            const scale = metersPerPixel * dpi * 39.37; // 1 inch = 0.0254 meter
-
-            console.log(`📏 Berekende schaal: 1:${scale.toFixed(0)}`);
-            document.getElementById("measured-scale").textContent = `1:${scale.toFixed(0)}`;
-        }
-
-        calculateRotation() {
-            const yStart = this.axes['y'].getLatLngs()[0];
-            const yEnd = this.axes['y'].getLatLngs()[1];
-
-            const deltaX = yEnd.lng - yStart.lng;
-            const deltaY = yEnd.lat - yStart.lat;
-
-            const angleRad = Math.atan2(deltaY, deltaX);
-            const angleDeg = angleRad * (180 / Math.PI);
-
-            console.log(`🔄 Gemeten rotatiehoek: ${angleDeg.toFixed(3)}°`);
-            document.getElementById("measured-rotation").textContent = `${angleDeg.toFixed(3)}°`;
-        }
-
-        loadIIIFLayer(infoJsonUrl) {
-            console.log(`🔄 Laden van IIIF-afbeelding van: ${infoJsonUrl}`);
-        
-            try {
-                // Zorg ervoor dat de IIIF plugin beschikbaar is
-                if (L.tileLayer.iiif) {
-                    // Laag toevoegen met info.json URL
-                    this.iiifLayer = L.tileLayer.iiif(infoJsonUrl, {
-                        minZoom: 0,
-                        maxZoom: 5,
-                        continuousWorld: true,
-                        noWrap: true
-                    }).addTo(this.map);
-        
-                    console.log("✅ IIIF-afbeelding succesvol geladen!");
-                } else {
-                    console.error("❌ De IIIF plugin is niet geladen. Controleer of de leaflet-iiif.js correct is ingeladen.");
+    // Methode voor het verwijderen van oude markers
+    removeMarkers(axisId) {
+        const polyline = this.axes[axisId];
+        if (polyline) {
+            polyline.eachLayer((layer) => {
+                if (layer instanceof L.Marker) {
+                    this.map.removeLayer(layer);
                 }
-            } catch (error) {
-                console.error("❌ Er is een fout opgetreden bij het ophalen van de IIIF-afbeelding:", error);
-            }
+            });
         }
     }
 
-    const editor = new AxisEditor(map);
+    // Voeg SVG-icoontjes als markers toe bij het begin en het einde van de lijn
+    addMarkersToLine(line, color) {
+        const latlngs = line.getLatLngs();
 
-    // Event listeners voor knoppen
-    document.getElementById("draw-x-axis").addEventListener("click", () => editor.startDrawingAxis("x", "blue"));
-    document.getElementById("draw-x2-axis").addEventListener("click", () => editor.startDrawingAxis("x2", "orange"));
-    document.getElementById("draw-y-axis").addEventListener("click", () => editor.startDrawingAxis("y", "red"));
-    document.getElementById("generate-grid").addEventListener("click", () => editor.generateGrid());
+        // Voeg marker aan het begin van de lijn toe
+        L.marker(latlngs[0], { icon: this.createSvgIcon(color) }).addTo(this.map);
 
-    // Event listener voor klikken op de kaart
-    map.on('click', (event) => editor.handleMapClick(event));
+        // Voeg marker aan het einde van de lijn toe
+        L.marker(latlngs[latlngs.length - 1], { icon: this.createSvgIcon(color) }).addTo(this.map);
+    }
 
-    // Event listener voor het laden van de IIIF-afbeelding
-    document.getElementById("load-iiif").addEventListener("click", () => {
-        const infoJsonUrl = document.getElementById("info-json-url").value;
-        if (infoJsonUrl) {
-            editor.loadIIIFLayer(infoJsonUrl);
-        } else {
-            console.warn("⚠️ Geen info.json URL ingevoerd.");
+    // Functie om een SVG-icoontje als marker toe te voegen
+    createSvgIcon(color) {
+        return L.divIcon({
+            className: 'custom-svg-icon',
+            html: `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" viewBox="0 0 128 128" style="enable-background:new 0 0 128 128" xml:space="preserve">
+                    <path d="M33.1 31.3C33.1 14.6 47.2 1 64.2 1s30.7 13.5 30.7 30.2c0 14.4-10.2 26.4-23.8 29.4L63.8 127l-7.3-66.4c-13.3-3.5-23.4-15.2-23.4-29.3zm30.7-8.1c0-4.6-3.8-8.2-8.4-8.2S47 18.6 47 23.2s3.8 8.2 8.4 8.2 8.4-3.7 8.4-8.2z" 
+                    style="fill:${color}; fill-rule:evenodd;clip-rule:evenodd"/>
+                   </svg>`,
+            iconSize: [30, 30], // Grootte van het icoontje
+            iconAnchor: [15, 30], // Positioneer het icoontje naar beneden
+        });
+    }
+
+    // Functie voor het laden van de IIIF-afbeelding
+    loadIIIFLayer(url) {
+        console.log(`🔄 Laden van IIIF-afbeelding van: ${url}`);
+        if (!url) {
+            console.error('❌ Geen URL opgegeven');
+            return;
         }
+
+        // Maak een AJAX-aanroep om de info.json op te halen
+        fetch(url)
+            .then(response => response.json())
+            .then(info => {
+                // Haal de afbeeldingskenmerken uit de info.json
+                const { width, height, tiles, profile } = info;
+                const tileSize = tiles[0].width;
+
+                // Laad de IIIF laag dynamisch met de verkregen eigenschappen
+                const iiifLayer = L.tileLayer(`${info["@id"]}/{z}/{x}/{y}.jpg`, {
+                    bounds: [[0, 0], [height, width]],
+                    tileSize: tileSize,
+                    minZoom: -2,
+                    maxZoom: 10,
+                    attribution: "IIIF Image"
+                }).addTo(this.map);
+
+                console.log("✅ IIIF-afbeelding geladen!");
+            })
+            .catch(error => {
+                console.error("❌ Er is een fout opgetreden bij het ophalen van de IIIF-afbeelding: ", error);
+            });
+    }
+}
+
+// Wacht tot de DOM geladen is voordat we de editor starten
+document.addEventListener('DOMContentLoaded', () => {
+    const map = L.map('map', {
+        crs: L.CRS.Simple, // Gebruik een eigen orthogonaal stelsel
+        minZoom: -2, // Minimaal zoomniveau
+        maxZoom: 10, // Maximaal zoomniveau
+        zoomControl: false, // Geen standaard zoomknoppen
     });
+
+    // Zorg dat je geen map.setView gebruikt!
+
+    // Start de AxisEditor
+    const editor = new AxisEditor(map);
 });
