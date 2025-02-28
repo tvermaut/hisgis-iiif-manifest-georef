@@ -119,30 +119,21 @@ class AxisEditor {
             console.error('❌ Geen URL opgegeven');
             return;
         }
-
-        // Maak een AJAX-aanroep om de info.json op te halen
-        fetch(url)
-            .then(response => response.json())
-            .then(info => {
-                // Haal de afbeeldingskenmerken uit de info.json
-                const { width, height, tiles, profile } = info;
-                const tileSize = tiles[0].width;
-
-                // Laad de IIIF laag dynamisch met de verkregen eigenschappen
-                const iiifLayer = L.tileLayer.iiif(url, {
-                    bounds: [[0, 0], [height, width]],
-                    tileSize: tileSize,
-                    minZoom: -2,
-                    maxZoom: 10,
-                    attribution: "IIIF Image"
-                }).addTo(this.map);
-
-                console.log("✅ IIIF-afbeelding geladen!");
-            })
-            .catch(error => {
-                console.error("❌ Er is een fout opgetreden bij het ophalen van de IIIF-afbeelding: ", error);
-            });
+    
+        // Laad de IIIF laag direct met de URL
+        const iiifLayer = L.tileLayer.iiif(url, {
+            quality: 'default',
+            fitBounds: true
+        }).addTo(this.map);
+    
+        // Optioneel: Pas de kaartweergave aan wanneer de laag is geladen
+        iiifLayer.on('load', () => {
+            const imageBounds = iiifLayer.getBounds();
+            this.map.fitBounds(imageBounds);
+            console.log("✅ IIIF-afbeelding geladen!");
+        });
     }
+    
 }
 
 // Wacht tot de DOM geladen is voordat we de editor starten
