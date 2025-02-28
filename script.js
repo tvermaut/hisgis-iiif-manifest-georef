@@ -45,8 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.log("✅ JSON Response:", data);
 
                 const baseUrl = data["@id"];
-                const tileSize = data.tiles[0].width;  // Meestal 256
-                const maxZoom = Math.max(...data.tiles[0].scaleFactors);
+                const tileSize = data.tiles[0].width || 256;  // Meestal 256
+                const scaleFactors = data.tiles[0].scaleFactors;
+                const maxZoom = Math.max(...scaleFactors);
                 const imageWidth = data.width;
                 const imageHeight = data.height;
 
@@ -60,27 +61,29 @@ document.addEventListener("DOMContentLoaded", () => {
                     map.removeLayer(window.iiifLayer);
                 }
 
-                // Custom Leaflet TileLayer voor IIIF
-                const IIIFLayer = L.TileLayer.extend({
-                    getTileUrl: function(coords) {
-                        const scaleFactor = Math.pow(2, maxZoom - coords.z);
-                        const x = coords.x * tileSize * scaleFactor;
-                        const y = coords.y * tileSize * scaleFactor;
+                // **Correcte** IIIF Tile URL-opbouw
+                function constructIIIFTileUrl(coords) {
+                    const zoomLevel = scaleFactors.find(factor => factor === Math.pow(2, maxZoom - coords.z));
+                    if (!zoomLevel) return ""; // Vermijd ongeldige requests
 
-                        if (x >= imageWidth || y >= imageHeight || x < 0 || y < 0) {
-                            return ""; // Voorkom ongeldige requests
-                        }
+                    const tileX = coords.x * tileSize * zoomLevel;
+                    const tileY = coords.y * tileSize * zoomLevel;
+                    const tileW = Math.min(tileSize * zoomLevel, imageWidth - tileX);
+                    const tileH = Math.min(tileSize * zoomLevel, imageHeight - tileY);
 
-                        return `${baseUrl}/${x},${y},${tileSize},${tileSize}/full/0/default.jpg`;
+                    if (tileX >= imageWidth || tileY >= imageHeight || tileX < 0 || tileY < 0) {
+                        return "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; // Voorkom fouten
                     }
-                });
 
-                // Voeg de laag toe aan Leaflet
-                window.iiifLayer = new IIIFLayer(null, {
+                    return `${baseUrl}/${tileX},${tileY},${tileW},${tileH}/256,/0/default.jpg`;
+                }
+
+                // Maak een nieuwe IIIF-laag aan
+                window.iiifLayer = L.tileLayer(constructIIIFTileUrl, {
                     tileSize: tileSize,
                     maxZoom: maxZoom,
                     noWrap: true,
-                    bounds: [[0, 0], [imageHeight, imageWidth]]
+                    bounds: [[0, 0], [imageHeight, imageWidth]],
                 });
 
                 map.addLayer(window.iiifLayer);
