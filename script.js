@@ -80,34 +80,50 @@ function startDrawLine(lineType) {
 }
 
 function drawLine(start, end, lineType) {
-    const line = document.createElement('div');
-    line.style.position = 'absolute';
-    line.style.backgroundColor = lineType === 'x' ? 'red' : 'blue';
-    line.style.width = '2px';
-    line.style.transformOrigin = '0 0';
+    // Maak een SVG-element aan
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.style.position = 'absolute';
+    svg.style.width = '100%';
+    svg.style.height = '100%';
+    svg.style.left = '0';
+    svg.style.top = '0';
+    svg.style.pointerEvents = 'none'; // Zorg ervoor dat de SVG niet interactief is
 
+    // Maak een lijn binnen de SVG
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('stroke', lineType === 'x' ? 'red' : 'blue'); // Stel de kleur in
+    line.setAttribute('stroke-width', '2'); // Stel de dikte van de lijn in
+
+    svg.appendChild(line);
+
+    // Voeg de SVG toe aan de viewer als overlay
     const overlay = {
-        element: line,
-        location: new OpenSeadragon.Rect(start.x, start.y, end.x - start.x, end.y - start.y),
+        element: svg,
+        location: new OpenSeadragon.Rect(0, 0, 1, 1), // Dummy locatie (we updaten dit later)
         placement: OpenSeadragon.Placement.TOP_LEFT
     };
 
     viewer.addOverlay(overlay);
+
+    // Update de lijn met de juiste coördinaten
     updateLine(overlay, start, end);
 
     return overlay;
 }
 
 function updateLine(lineOverlay, start, end) {
-    const dx = end.x - start.x;
-    const dy = end.y - start.y;
-    const length = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    // Converteer start- en eindpunten naar viewport-pixels
+    const startPixel = viewer.viewport.pixelFromPoint(start);
+    const endPixel = viewer.viewport.pixelFromPoint(end);
 
-    lineOverlay.element.style.width = `${length * 100}%`;
-    lineOverlay.element.style.transform = `rotate(${angle}deg)`;
-    
-    lineOverlay.location = new OpenSeadragon.Rect(start.x, start.y, end.x - start.x, end.y - start.y);
+    // Pas de lijn aan binnen het SVG-element
+    const line = lineOverlay.element.querySelector('line');
+    line.setAttribute('x1', startPixel.x);
+    line.setAttribute('y1', startPixel.y);
+    line.setAttribute('x2', endPixel.x);
+    line.setAttribute('y2', endPixel.y);
+
+    // Zorg ervoor dat het overlay-element correct wordt bijgewerkt
     viewer.updateOverlay(lineOverlay);
 }
 
