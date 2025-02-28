@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const mapElement = document.getElementById('map');
+    const mapElement = document.getElementById("map");
 
     if (!mapElement) {
-        console.error("Fout: 'map' container niet gevonden.");
+        console.error("❌ Fout: 'map' container niet gevonden.");
         return;
     }
 
@@ -12,11 +12,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Initialiseer Leaflet-kaart
-    window.map = L.map('map', {
-        center: [0, 0],
-        zoom: 1,
+    window.map = L.map("map", {
+        center: [52.0, 5.0], // Nederland als voorbeeld
+        zoom: 4,
         crs: L.CRS.Simple
     });
+
+    console.log("✅ Leaflet-kaart succesvol geladen!");
 
     let iiifLayer;
 
@@ -36,12 +38,14 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             iiifLayer.addTo(window.map);
+            console.log("✅ IIIF-laag geladen:", url);
         } catch (error) {
-            console.error("Fout bij laden van IIIF:", error);
+            console.error("❌ Fout bij laden van IIIF:", error);
         }
     }
 
-    const infoJsonUrlInput = document.getElementById('info-json-url');
+    // Controleer GET-parameter 'infoJsonUrl'
+    const infoJsonUrlInput = document.getElementById("info-json-url");
 
     infoJsonUrlInput.addEventListener("change", () => {
         const newUrl = infoJsonUrlInput.value.trim();
@@ -50,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Controleer GET-parameter 'infoJsonUrl'
+    // Laad een bestaande IIIF URL als er een is via de URL
     const urlParams = new URLSearchParams(window.location.search);
     const paramUrl = urlParams.get("infoJsonUrl");
     if (paramUrl) {
