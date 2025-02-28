@@ -141,4 +141,40 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const editor = new AxisEditor(map);
+
+    document.getElementById("draw-x-axis-2").addEventListener("click", () => {
+        console.log("🟠 X-as-2 tekenen...");
+        const yCoord = parseFloat(document.getElementById("x-axis-2-value").value);
+        
+        if (isNaN(yCoord)) {
+            console.error("❌ Ongeldige waarde voor X-as-2.");
+            return;
+        }
+    
+        editor.addOrUpdateAxis("x2", [yCoord - 50, -100], [yCoord - 50, 100], "orange");
+    });
+    
+    document.getElementById("draw-x-axis").addEventListener("click", () => {
+        console.log("🔵 X-as tekenen...");
+        const yCoord = parseFloat(document.getElementById("x-axis-value").value);
+        
+        if (isNaN(yCoord)) {
+            console.error("❌ Ongeldige waarde voor X-as.");
+            return;
+        }
+    
+        editor.addOrUpdateAxis("x", [yCoord, -100], [yCoord, 100], "blue");
+    });
+    
+    document.getElementById("draw-y-axis").addEventListener("click", () => {
+        console.log("🟢 Y-as tekenen...");
+        const xCoord = parseFloat(document.getElementById("y-axis-value").value);
+        
+        if (isNaN(xCoord)) {
+            console.error("❌ Ongeldige waarde voor Y-as.");
+            return;
+        }
+    
+        editor.addOrUpdateAxis("y", [-100, xCoord], [100, xCoord], "green");
+    });
 });
