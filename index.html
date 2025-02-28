@@ -3,16 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Afbeelding Viewer met Assen</title>
+    <title>Afbeelding Editor</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
-        #map { height: 500px; }
+        html, body, #map { height: 100%; width: 100%; margin: 0; padding: 0; }
         #url-input {
             position: absolute;
             top: 10px;
             right: 60px;
             z-index: 1000;
         }
+        #load-button, #draw-x-axis, #draw-y-axis {
+            position: absolute;
+            z-index: 1000;
+        }
+        #load-button { top: 10px; left: 10px; }
+        #draw-x-axis { top: 40px; left: 10px; }
+        #draw-y-axis { top: 70px; left: 10px; }
         .modal {
             display: none;
             position: fixed;
@@ -33,8 +40,9 @@
     </style>
 </head>
 <body>
-    <input type="text" id="url-input" placeholder="Voer afbeelding URL in">
     <div id="map"></div>
+    <input type="text" id="url-input" placeholder="Voer afbeelding URL in">
+    <button id="load-button">Laad info.json</button>
     <button id="draw-x-axis">Teken X-as</button>
     <button id="draw-y-axis">Teken Y-as</button>
 
@@ -57,33 +65,50 @@
         let canvas;
         let drawingX = false;
         let drawingY = false;
+        let lineStart, lineEnd;
 
-        document.getElementById('url-input').addEventListener('change', function(e) {
-            const url = e.target.value;
-            if (imageLayer) {
-                map.removeLayer(imageLayer);
-            }
-            imageLayer = L.imageOverlay(url, [[-1000, -1000], [1000, 1000]]).addTo(map);
-            map.fitBounds([[-1000, -1000], [1000, 1000]]);
+        document.getElementById('load-button').addEventListener('click', loadInfoJson);
+        document.getElementById('draw-x-axis').addEventListener('click', startDrawXAxis);
+        document.getElementById('draw-y-axis').addEventListener('click', startDrawYAxis);
 
-            // Create canvas overlay
-            if (canvas) {
-                map.removeLayer(canvas);
-            }
-            canvas = L.canvas().addTo(map);
-        });
+        function loadInfoJson() {
+            fetch('info.json')
+                .then(response => response.json())
+                .then(data => {
+                    if (imageLayer) {
+                        map.removeLayer(imageLayer);
+                    }
+                    imageLayer = L.imageOverlay(data.url, [[0, 0], [data.height, data.width]]).addTo(map);
+                    map.fitBounds([[0, 0], [data.height, data.width]]);
 
-        document.getElementById('draw-x-axis').addEventListener('click', () => {
+                    if (canvas) {
+                        map.removeLayer(canvas);
+                    }
+                    canvas = L.canvas().addTo(map);
+                });
+        }
+
+        function startDrawXAxis() {
             drawingX = true;
             drawingY = false;
-            showModal('Voer Y-coördinaat in voor X-as');
-        });
+            map.once('click', onFirstClick);
+        }
 
-        document.getElementById('draw-y-axis').addEventListener('click', () => {
+        function startDrawYAxis() {
             drawingX = false;
             drawingY = true;
-            showModal('Voer X-coördinaat in voor Y-as');
-        });
+            map.once('click', onFirstClick);
+        }
+
+        function onFirstClick(e) {
+            lineStart = e.latlng;
+            map.once('click', onSecondClick);
+        }
+
+        function onSecondClick(e) {
+            lineEnd = e.latlng;
+            showModal(drawingX ? 'Voer Y-coördinaat in voor X-as' : 'Voer X-coördinaat in voor Y-as');
+        }
 
         function showModal(title) {
             document.getElementById('modal-title').textContent = title;
@@ -105,8 +130,8 @@
             ctx.strokeStyle = 'red';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            const start = map.latLngToContainerPoint([-1000, -1000]);
-            const end = map.latLngToContainerPoint([1000, -1000]);
+            const start = map.latLngToContainerPoint(lineStart);
+            const end = map.latLngToContainerPoint(lineEnd);
             ctx.moveTo(start.x, y);
             ctx.lineTo(end.x, y);
             ctx.stroke();
@@ -117,8 +142,8 @@
             ctx.strokeStyle = 'blue';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            const start = map.latLngToContainerPoint([-1000, -1000]);
-            const end = map.latLngToContainerPoint([-1000, 1000]);
+            const start = map.latLngToContainerPoint(lineStart);
+            const end = map.latLngToContainerPoint(lineEnd);
             ctx.moveTo(x, start.y);
             ctx.lineTo(x, end.y);
             ctx.stroke();
