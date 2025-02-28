@@ -3,169 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Afbeelding Editor</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <style>
-        html, body, #map { height: 100%; width: 100%; margin: 0; padding: 0; }
-        #url-input {
-            position: absolute;
-            top: 10px;
-            right: 60px;
-            z-index: 1000;
-        }
-        #load-button, #draw-x-axis, #draw-y-axis {
-            position: absolute;
-            z-index: 1000;
-        }
-        #load-button { top: 10px; left: 10px; }
-        #draw-x-axis { top: 40px; left: 10px; }
-        #draw-y-axis { top: 70px; left: 10px; }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1001;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.4);
-        }
-        .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 300px;
-        }
-    </style>
+    <title>Historische Kaart Editor</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="map"></div>
-    <input type="text" id="url-input" placeholder="Voer basis-URL in">
-    <button id="load-button">Laad info.json</button>
-    <button id="draw-x-axis">Teken X-as</button>
-    <button id="draw-y-axis">Teken Y-as</button>
 
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <h2 id="modal-title"></h2>
-            <input type="number" id="axis-input">
-            <button id="confirm-axis">Bevestig</button>
+    <div id="editor-container">
+        <h1>Historische Kaart Editor</h1>
+
+        <!-- Kaart viewer -->
+        <canvas id="mapCanvas"></canvas>
+
+        <!-- Invoervelden -->
+        <div id="controls">
+            <label for="info-json-url">IIIF info.json URL:</label>
+            <input type="text" id="info-json-url" placeholder="Vul de info.json URL in">
+
+            <label for="scale-select">Schaal:</label>
+            <select id="scale-select">
+                <option value="2500">1:2500</option>
+                <option value="1250">1:1250</option>
+                <option value="5000">1:5000</option>
+            </select>
+
+            <label for="x-axis-value">X-as waarde:</label>
+            <input type="number" id="x-axis-value" placeholder="X-as waarde">
+
+            <label for="y-axis-value">Y-as waarde:</label>
+            <input type="number" id="y-axis-value" placeholder="Y-as waarde">
+
+            <button id="generate-grid">Genereer Ruitkruisnet</button>
         </div>
+
+        <!-- Grafieken -->
+        <div id="graphs">
+            <canvas id="gauss-curve"></canvas>
+            <canvas id="scale-graph"></canvas>
+        </div>
+
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script>
-        const map = L.map('map', {
-            maxZoom: 10,
-            crs: L.CRS.Simple
-        }).setView([0, 0], 0);
-
-        let imageLayer;
-        let canvas;
-        let drawingX = false;
-        let drawingY = false;
-        let lineStart, lineEnd;
-
-        document.getElementById('load-button').addEventListener('click', loadInfoJson);
-        document.getElementById('draw-x-axis').addEventListener('click', startDrawXAxis);
-        document.getElementById('draw-y-axis').addEventListener('click', startDrawYAxis);
-
-        function loadInfoJson() {
-            const baseUrl = document.getElementById('url-input').value.trim();
-            if (!baseUrl) {
-                alert('Voer eerst een basis-URL in');
-                return;
-            }
-
-            const infoJsonUrl = baseUrl + '';
-
-            fetch(infoJsonUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (imageLayer) {
-                        map.removeLayer(imageLayer);
-                    }
-                    const imageUrl = baseUrl + '/' + data.url;
-                    imageLayer = L.imageOverlay(imageUrl, [[0, 0], [data.height, data.width]]).addTo(map);
-                    map.fitBounds([[0, 0], [data.height, data.width]]);
-
-                    if (canvas) {
-                        map.removeLayer(canvas);
-                    }
-                    canvas = L.canvas().addTo(map);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Er is een fout opgetreden bij het laden van info.json');
-                });
-        }
-
-        function startDrawXAxis() {
-            drawingX = true;
-            drawingY = false;
-            map.once('click', onFirstClick);
-        }
-
-        function startDrawYAxis() {
-            drawingX = false;
-            drawingY = true;
-            map.once('click', onFirstClick);
-        }
-
-        function onFirstClick(e) {
-            lineStart = e.latlng;
-            map.once('click', onSecondClick);
-        }
-
-        function onSecondClick(e) {
-            lineEnd = e.latlng;
-            showModal(drawingX ? 'Voer Y-coördinaat in voor X-as' : 'Voer X-coördinaat in voor Y-as');
-        }
-
-        function showModal(title) {
-            document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal').style.display = 'block';
-        }
-
-        document.getElementById('confirm-axis').addEventListener('click', () => {
-            const value = parseFloat(document.getElementById('axis-input').value);
-            document.getElementById('modal').style.display = 'none';
-            if (drawingX) {
-                drawXAxis(value);
-            } else if (drawingY) {
-                drawYAxis(value);
-            }
-        });
-
-        function drawXAxis(y) {
-            const ctx = canvas.getContext('2d');
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            const start = map.latLngToContainerPoint(lineStart);
-            const end = map.latLngToContainerPoint(lineEnd);
-            ctx.moveTo(start.x, y);
-            ctx.lineTo(end.x, y);
-            ctx.stroke();
-        }
-
-        function drawYAxis(x) {
-            const ctx = canvas.getContext('2d');
-            ctx.strokeStyle = 'blue';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            const start = map.latLngToContainerPoint(lineStart);
-            const end = map.latLngToContainerPoint(lineEnd);
-            ctx.moveTo(x, start.y);
-            ctx.lineTo(x, end.y);
-            ctx.stroke();
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
