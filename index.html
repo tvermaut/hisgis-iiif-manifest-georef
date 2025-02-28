@@ -78,9 +78,7 @@
                 return;
             }
 
-            const infoJsonUrl = baseUrl + '/info.json';
-
-            fetch(infoJsonUrl)
+            fetch(baseUrl)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
