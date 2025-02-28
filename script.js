@@ -25,8 +25,8 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("✅ JSON Response:", data);
     
             const baseUrl = data["@id"];
-            const tileSize = data.tiles[0].width;  // Dit is 256
-            const maxZoom = Math.max(...data.tiles[0].scaleFactors); // Hoogste schaalfactor
+            const tileSize = data.tiles[0].width;  // Meestal 256
+            const maxZoom = Math.max(...data.tiles[0].scaleFactors);
             const imageWidth = data.width;
             const imageHeight = data.height;
     
@@ -35,18 +35,34 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("ℹ️ Max Zoom Level:", maxZoom);
             console.log("ℹ️ Image Dimensions:", imageWidth, "x", imageHeight);
     
-            // Handmatig een correcte tile-URL bouwen
-            const customTileUrl = function(coords) {
-                const scaleFactor = Math.pow(2, maxZoom - coords.z);
-                const x = coords.x * tileSize * scaleFactor;
-                const y = coords.y * tileSize * scaleFactor;
+            // Custom Leaflet TileLayer voor IIIF
+            const IIIFLayer = L.TileLayer.extend({
+                getTileUrl: function(coords) {
+                    const scaleFactor = Math.pow(2, maxZoom - coords.z);
+                    const x = coords.x * tileSize * scaleFactor;
+                    const y = coords.y * tileSize * scaleFactor;
     
-                if (x >= imageWidth || y >= imageHeight) {
-                    return ""; // Voorkom ongeldige requests
+                    if (x >= imageWidth || y >= imageHeight || x < 0 || y < 0) {
+                        return ""; // Voorkom ongeldige requests
+                    }
+    
+                    return `${baseUrl}/${x},${y},${tileSize},${tileSize}/full/0/default.jpg`;
                 }
+            });
     
-                return `${baseUrl}/${x},${y},${tileSize},${tileSize}/full/0/default.jpg`;
-            };
+            // Voeg de laag toe aan Leaflet
+            const iiifLayer = new IIIFLayer(null, {
+                tileSize: tileSize,
+                maxZoom: maxZoom,
+                noWrap: true,
+                bounds: [[0, 0], [imageHeight, imageWidth]]
+            });
+    
+            map.addLayer(iiifLayer);
+            console.log("✅ IIIF-kaartlaag succesvol geladen!");
+        })
+        .catch(error => console.error("❌ Fout bij laden van IIIF:", error));
+    
     
             // Voeg de laag toe aan Leaflet
             const iiifLayer = L.tileLayer(customTileUrl, {
