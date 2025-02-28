@@ -3,100 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IIIF Viewer met Leaflet en Assen</title>
+    <title>Afbeelding Viewer met Assen</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet-iiif@3.0.0/leaflet-iiif.min.js"></script>
     <style>
-        html, body, #map {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        #controls {
+        #map { height: 500px; }
+        #url-input {
             position: absolute;
             top: 10px;
-            left: 10px;
+            right: 60px;
             z-index: 1000;
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px;
         }
     </style>
 </head>
 <body>
-    <div id="controls">
-        <input type="text" id="infoJsonUrl" placeholder="Voer info.json URL in" size="50">
-        <button onclick="loadImage()">Laad afbeelding</button>
-        <button onclick="startDrawingAxes()">Teken assen</button>
-    </div>
+    <input type="text" id="url-input" placeholder="Voer afbeelding URL in">
     <div id="map"></div>
+    <button id="draw-x-axis">Teken X-as</button>
+    <button id="draw-y-axis">Teken Y-as</button>
 
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title"></h2>
+            <input type="number" id="axis-input">
+            <button id="confirm-axis">Bevestig</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
-        var map = L.map('map', {
-            center: [0, 0],
-            crs: L.CRS.Simple,
-            zoom: 0
+        const map = L.map('map', {
+            maxZoom: 10,
+            crs: L.CRS.Simple
+        }).setView([0, 0], 0);
+
+        let imageLayer;
+        let canvas;
+        let drawingX = false;
+        let drawingY = false;
+
+        document.getElementById('url-input').addEventListener('change', function(e) {
+            const url = e.target.value;
+            if (imageLayer) {
+                map.removeLayer(imageLayer);
+            }
+            imageLayer = L.imageOverlay(url, [[-1000, -1000], [1000, 1000]]).addTo(map);
+            map.fitBounds([[-1000, -1000], [1000, 1000]]);
+
+            // Create canvas overlay
+            if (canvas) {
+                map.removeLayer(canvas);
+            }
+            canvas = L.canvas().addTo(map);
         });
 
-        var axesLayer;
-        var clickCount = 0;
-        var point1, point2;
+        document.getElementById('draw-x-axis').addEventListener('click', () => {
+            drawingX = true;
+            drawingY = false;
+            showModal('Voer Y-coördinaat in voor X-as');
+        });
 
-        function loadImage() {
-            var infoJsonUrl = document.getElementById('infoJsonUrl').value;
-            if (infoJsonUrl) {
-                // Verwijder bestaande lagen
-                map.eachLayer(function(layer) {
-                    map.removeLayer(layer);
-                });
+        document.getElementById('draw-y-axis').addEventListener('click', () => {
+            drawingX = false;
+            drawingY = true;
+            showModal('Voer X-coördinaat in voor Y-as');
+        });
 
-                // Voeg nieuwe IIIF-laag toe
-                var iiifLayer = L.tileLayer.iiif(infoJsonUrl).addTo(map);
+        function showModal(title) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal').style.display = 'block';
+        }
 
-                // Pas de kaartgrootte aan wanneer de afbeelding is geladen
-                iiifLayer.on('load', function() {
-                    map.fitBounds(iiifLayer.getBounds());
-                });
-            } else {
-                alert('Voer een geldige info.json URL in');
+        document.getElementById('confirm-axis').addEventListener('click', () => {
+            const value = parseFloat(document.getElementById('axis-input').value);
+            document.getElementById('modal').style.display = 'none';
+            if (drawingX) {
+                drawXAxis(value);
+            } else if (drawingY) {
+                drawYAxis(value);
             }
+        });
+
+        function drawXAxis(y) {
+            const ctx = canvas.getContext('2d');
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            const start = map.latLngToContainerPoint([-1000, -1000]);
+            const end = map.latLngToContainerPoint([1000, -1000]);
+            ctx.moveTo(start.x, y);
+            ctx.lineTo(end.x, y);
+            ctx.stroke();
         }
 
-        function startDrawingAxes() {
-            clickCount = 0;
-            map.on('click', onMapClick);
-            alert('Klik twee punten op de afbeelding om de assen te tekenen.');
-        }
-
-        function onMapClick(e) {
-            if (clickCount == 0) {
-                point1 = e.latlng;
-                clickCount++;
-            } else if (clickCount == 1) {
-                point2 = e.latlng;
-                map.off('click', onMapClick);
-                promptForCoordinates();
-            }
-        }
-
-        function promptForCoordinates() {
-            var yCoord = prompt("Voer Y-coördinaat in voor X-as:");
-            var xCoord = prompt("Voer X-coördinaat in voor Y-as:");
-            drawAxes(parseFloat(yCoord), parseFloat(xCoord));
-        }
-
-        function drawAxes(yCoord, xCoord) {
-            if (axesLayer) {
-                map.removeLayer(axesLayer);
-            }
-            axesLayer = L.layerGroup().addTo(map);
-
-            // Teken X-as
-            L.polyline([[yCoord, point1.lng], [yCoord, point2.lng]], {color: 'red'}).addTo(axesLayer);
-            
-            // Teken Y-as
-            L.polyline([[point1.lat, xCoord], [point2.lat, xCoord]], {color: 'blue'}).addTo(axesLayer);
+        function drawYAxis(x) {
+            const ctx = canvas.getContext('2d');
+            ctx.strokeStyle = 'blue';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            const start = map.latLngToContainerPoint([-1000, -1000]);
+            const end = map.latLngToContainerPoint([-1000, 1000]);
+            ctx.moveTo(x, start.y);
+            ctx.lineTo(x, end.y);
+            ctx.stroke();
         }
     </script>
 </body>
