@@ -149,10 +149,10 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log(`🔄 Laden van IIIF-afbeelding van: ${infoJsonUrl}`);
         
             try {
-                // Zorg ervoor dat de IIIF plugin goed is geladen via de info.json
+                // Zorg ervoor dat de IIIF plugin beschikbaar is
                 if (L.TileLayer.Iiif) {
+                    // Laag toevoegen met info.json URL
                     this.iiifLayer = L.TileLayer.Iiif(infoJsonUrl, {
-                        bounds: [[0, 0], [this.map.getSize().y, this.map.getSize().x]],
                         minZoom: 0,
                         maxZoom: 5,
                         continuousWorld: true,
