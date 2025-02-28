@@ -21,7 +21,7 @@ class AxisEditor {
             this.startDrawingAxis('y-axis');
         });
 
-        document.getElementById('draw-x-axis-2').addEventListener('click', () => {
+        document.getElementById('draw-x2-axis').addEventListener('click', () => {
             this.startDrawingAxis('x-axis-2');
         });
 
