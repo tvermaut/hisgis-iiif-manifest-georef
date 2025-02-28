@@ -28,38 +28,48 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const response = await fetch(infoJsonUrl);
             const data = await response.json();
-
+    
             const width = data.width;
             const height = data.height;
             const tileWidth = data.tiles[0].width;
             const tileHeight = data.tiles[0].height;
-
-            const topLeftX = Math.floor(xAxis / tileWidth);
-            const topLeftY = Math.floor(yAxis / tileHeight);
-            const bottomRightX = Math.ceil((xAxis + mapCanvas.width) / tileWidth);
-            const bottomRightY = Math.ceil((yAxis + mapCanvas.height) / tileHeight);
-
+            const iiifBaseUrl = data['@id']; // Basis-URL voor IIIF
+    
+            // Correcte tile-grootte bepalen
+            const tileSize = data.tiles[0].width || 256;
+    
+            // Coördinaten voor het zichtbare canvas berekenen
+            const cols = Math.ceil(mapCanvas.width / tileSize);
+            const rows = Math.ceil(mapCanvas.height / tileSize);
+    
             tiles = [];
-            for (let i = topLeftX; i <= bottomRightX; i++) {
-                for (let j = topLeftY; j <= bottomRightY; j++) {
-                    const tileUrl = `${data['@id']}/tile/${i},${j},${scale}.jpg`;
-                    tiles.push({ x: i * tileWidth, y: j * tileHeight, url: tileUrl });
+    
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows; j++) {
+                    const x = i * tileSize;
+                    const y = j * tileSize;
+    
+                    // **IIIF 2.0 formaat:** /region/size/rotation/quality.format
+                    const tileUrl = `${iiifBaseUrl}/${x},${y},${tileSize},${tileSize}/full/0/default.jpg`;
+    
+                    tiles.push({ x, y, url: tileUrl });
                 }
             }
-
+    
+            // Canvas opschonen en tegels laden
             ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
             tiles.forEach(tile => {
                 const img = new Image();
                 img.onload = () => {
-                    ctx.drawImage(img, tile.x, tile.y);
+                    ctx.drawImage(img, tile.x, tile.y, tileSize, tileSize);
                 };
                 img.src = tile.url;
             });
-
+    
         } catch (error) {
             console.error('Fout bij het laden van de IIIF tiles:', error);
         }
-    }
+    }    
 
     function regenerateGrid() {
         ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
