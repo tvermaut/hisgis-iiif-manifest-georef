@@ -65,6 +65,38 @@ document.addEventListener("DOMContentLoaded", () => {
             this.axes = {};
             this.gridLayer = null;
             this.markers = {};
+            this.drawing = null;
+        }
+    
+        startDrawingAxis(axisId, color) {
+            console.log(`✏️ Start met tekenen van ${axisId}`);
+    
+            if (this.drawing) {
+                console.warn("⚠️ Er is al een tekenactie bezig!");
+                return;
+            }
+    
+            this.drawing = {
+                id: axisId,
+                color: color,
+                points: []
+            };
+    
+            this.map.on("click", this.handleMapClick.bind(this));
+        }
+    
+        handleMapClick(event) {
+            if (!this.drawing) return;
+    
+            this.drawing.points.push(event.latlng);
+            console.log(`📍 Punt toegevoegd:`, event.latlng);
+    
+            if (this.drawing.points.length === 2) {
+                console.log(`✅ ${this.drawing.id} voltooid!`);
+                this.addOrUpdateAxis(this.drawing.id, this.drawing.points[0], this.drawing.points[1], this.drawing.color);
+                this.map.off("click", this.handleMapClick.bind(this));
+                this.drawing = null;
+            }
         }
 
         addOrUpdateAxis(id, start, end, color) {
@@ -143,17 +175,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const editor = new AxisEditor(map);
 
     document.getElementById("draw-x-axis").addEventListener("click", () => {
-        console.log("✏️ X-as tekenen...");
         editor.startDrawingAxis("x", "red");
     });
     
     document.getElementById("draw-y-axis").addEventListener("click", () => {
-        console.log("✏️ Y-as tekenen...");
         editor.startDrawingAxis("y", "blue");
     });
     
     document.getElementById("draw-x-axis-2").addEventListener("click", () => {
-        console.log("✏️ X-as-2 tekenen...");
         editor.startDrawingAxis("x2", "orange");
     });
 });
