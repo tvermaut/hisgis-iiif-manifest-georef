@@ -1,16 +1,14 @@
 let viewer;
-let gcps = [];
 let lines = [];
-let tempPoint;
-let tempMarker;
-let activeMarker;
 let drawingLine = false;
 let currentLineType;
-let tempLine;
-let lineStartPoint;
+let tempLine = null;
+let lineStartPoint = null;
 
 function loadImage() {
     const infoJsonUrl = document.getElementById('infoJsonUrl').value;
+    console.log("Loading image with URL:", infoJsonUrl);
+
     viewer = OpenSeadragon({
         id: "viewer",
         prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/3.1.0/images/",
@@ -21,52 +19,50 @@ function loadImage() {
         }
     });
 
-    viewer.addHandler('open', function() {
-        console.log('Viewer opened');
+    viewer.addHandler('open', function () {
+        console.log("Viewer opened.");
         viewer.addHandler('canvas-click', handleCanvasClick);
     });
 
-    viewer.addHandler('update-viewport', function() {
-        lines.forEach(line => {
-            updateLine(line.overlay, line.start, line.end);
-        });
-        updateMarkers();
+    viewer.addHandler('update-viewport', function () {
+        console.log("Viewport updated.");
+        updateAllLines();
     });
 }
 
 function handleCanvasClick(event) {
     if (!event.quick) return;
     event.preventDefaultAction = true;
-    
+
     const viewportPoint = viewer.viewport.pointFromPixel(event.position);
+    console.log("Canvas clicked at viewport point:", viewportPoint);
 
     if (drawingLine) {
         handleLineDrawing(viewportPoint);
     } else {
-        handleMarkerPlacement(viewportPoint);
+        console.log("No active drawing mode.");
     }
-}
-
-function handleMarkerPlacement(viewportPoint) {
-    tempPoint = viewportPoint;
-    
-    if (tempMarker) {
-        viewer.removeOverlay(tempMarker.element);
-    }
-    
-    tempMarker = addMarker(tempPoint, 'temp', true);
-    activeMarker = tempMarker;
-    
-    showModal();
 }
 
 function handleLineDrawing(viewportPoint) {
     if (!lineStartPoint) {
         lineStartPoint = viewportPoint;
         tempLine = drawLine(lineStartPoint, viewportPoint, currentLineType);
+        console.log("Started drawing line at:", lineStartPoint);
     } else {
         updateLine(tempLine, lineStartPoint, viewportPoint);
-        showLineModal();
+        console.log("Finished drawing line from", lineStartPoint, "to", viewportPoint);
+        
+        lines.push({
+            start: lineStartPoint,
+            end: viewportPoint,
+            type: currentLineType,
+            overlay: tempLine
+        });
+
+        // Reset temporary variables
+        lineStartPoint = null;
+        tempLine = null;
         drawingLine = false;
     }
 }
@@ -75,10 +71,13 @@ function startDrawLine(lineType) {
     drawingLine = true;
     currentLineType = lineType;
     lineStartPoint = null;
+
     if (tempLine) {
         viewer.removeOverlay(tempLine.element);
         tempLine = null;
     }
+
+    console.log(`Started drawing a ${lineType} line.`);
 }
 
 function drawLine(start, end, lineType) {
@@ -90,205 +89,48 @@ function drawLine(start, end, lineType) {
 
     const overlay = {
         element: line,
-        location: new OpenSeadragon.Rect(start.x, start.y, end.x - start.x, end.y - start.y),
-        placement: OpenSeadragon.OverlayPlacement.TOP_LEFT
+        location: new OpenSeadragon.Rect(start.x, start.y, 0, 0),
+        placement: OpenSeadragon.Placement.TOP_LEFT
     };
 
     viewer.addOverlay(overlay);
     updateLine(overlay, start, end);
 
+    console.log("Created a new line overlay:", overlay);
     return overlay;
 }
 
 function updateLine(lineOverlay, start, end) {
-    const viewportWidth = viewer.viewport.getContainerSize().x;
-    const zoom = viewer.viewport.getZoom();
-    
-    const dx = end.x - start.x;
-    const dy = end.y - start.y;
-    const length = Math.sqrt(dx * dx + dy * dy) * viewportWidth * zoom;
+    const startPixel = viewer.viewport.pixelFromPoint(start);
+    const endPixel = viewer.viewport.pixelFromPoint(end);
+
+    console.log("Updating line:");
+    console.log("  Start (viewport):", start);
+    console.log("  End (viewport):", end);
+    console.log("  Start (pixel):", startPixel);
+    console.log("  End (pixel):", endPixel);
+
+    const dx = endPixel.x - startPixel.x;
+    const dy = endPixel.y - startPixel.y;
+    const length = Math.sqrt(dx * dx + dy * dy);
     const angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
+    console.log("  Calculated length:", length);
+    console.log("  Calculated angle:", angle);
+
+    // Update the DOM element's style
     lineOverlay.element.style.width = `${length}px`;
     lineOverlay.element.style.transform = `rotate(${angle}deg)`;
-    
-    lineOverlay.location.x = start.x;
-    lineOverlay.location.y = start.y;
-    lineOverlay.location.width = end.x - start.x;
-    lineOverlay.location.height = end.y - start.y;
 
+    // Update the overlay's location to match the starting point
+    const rectLocation = new OpenSeadragon.Point(startPixel.x, startPixel.y);
+    
+    // Ensure the overlay is updated
     viewer.updateOverlay(lineOverlay);
+
 }
 
-function showModal() {
-    document.getElementById('modal').style.display = 'block';
-    document.getElementById('targetX').value = '';
-    document.getElementById('targetY').value = '';
-    document.getElementById('targetX').focus();
-}
-
-function showLineModal() {
-    document.getElementById('lineModal').style.display = 'block';
-    document.getElementById('lineValue').value = '';
-    document.getElementById('lineValue').focus();
-}
-
-function closeModal() {
-    document.getElementById('modal').style.display = 'none';
-    if (tempMarker) {
-        viewer.removeOverlay(tempMarker.element);
-        tempMarker = null;
-    }
-    activeMarker = null;
-}
-
-function closeLineModal() {
-    document.getElementById('lineModal').style.display = 'none';
-    if (tempLine) {
-        viewer.removeOverlay(tempLine.element);
-        tempLine = null;
-    }
-    lineStartPoint = null;
-}
-
-function addGcp() {
-    const targetX = parseFloat(document.getElementById('targetX').value);
-    const targetY = parseFloat(document.getElementById('targetY').value);
-    if (!isNaN(targetX) && !isNaN(targetY)) {
-        const gcp = {
-            x: tempPoint.x,
-            y: tempPoint.y,
-            targetX: targetX,
-            targetY: targetY
-        };
-        gcps.push(gcp);
-        updateGcpList();
-        
-        if (tempMarker) {
-            viewer.removeOverlay(tempMarker.element);
-        }
-        addMarker(gcp, gcps.length, false);
-        
-        closeModal();
-    } else {
-        alert('Voer geldige numerieke waarden in voor X en Y.');
-    }
-}
-
-function addLine() {
-    const lineValue = parseFloat(document.getElementById('lineValue').value);
-    if (!isNaN(lineValue)) {
-        const startPoint = new OpenSeadragon.Point(tempLine.location.x, tempLine.location.y);
-        const viewerCoordsStart = viewer.viewport.viewportToViewerElementCoordinates(startPoint);
-
-        const endPoint = new OpenSeadragon.Point(tempLine.location.x + tempLine.location.width, tempLine.location.y + tempLine.location.height);
-        const viewerCoordsEnd = viewer.viewport.viewportToViewerElementCoordinates(endPoint);
-
-        const line = {
-            start: startPoint,
-            end: endPoint,
-            type: currentLineType,
-            value: lineValue,
-            overlay: tempLine
-        };
-        lines.push(line);
-        updateLinesList();
-        
-        tempLine = null;
-        lineStartPoint = null;
-        closeLineModal();
-    } else {
-        alert('Voer een geldige numerieke waarde in voor de lijn.');
-    }
-}
-
-function updateGcpList() {
-    const gcpList = document.getElementById('gcpList');
-    gcpList.innerHTML = '<h3>GCP-punten:</h3>';
-    gcps.forEach((gcp, index) => {
-        gcpList.innerHTML += `<p>Punt ${index + 1}: (${gcp.x.toFixed(4)}, ${gcp.y.toFixed(4)}) → (${gcp.targetX}, ${gcp.targetY})</p>`;
-    });
-    updateLinesList();
-}
-
-function updateLinesList() {
-    const gcpList = document.getElementById('gcpList');
-    gcpList.innerHTML += '<h3>Lijnen:</h3>';
-    lines.forEach((line, index) => {
-        gcpList.innerHTML += `<p>Lijn ${index + 1} (${line.type}): ${line.value}</p>`;
-    });
-}
-
-function addMarker(point, id, isTemp) {
-    const markerSvg = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" viewBox="0 0 128 128" style="enable-background:new 0 0 128 128" xml:space="preserve">
-        <path d="M64 1C38.8 1 18.3 21.2 18.3 46S64 127 64 127s45.7-56.2 45.7-81S89.2 1 64 1zm0 73.9c-16.6 0-30-13.2-30-29.5C34 29 47.4 15.8 64 15.8S94 29 94 45.3 80.6 74.9 64 74.9z" style="fill-rule:evenodd;clip-rule:evenodd;fill:#191919"/>
-        <circle cx="64" cy="45.3" r="29.5" fill="${isTemp ? 'rgba(255,0,0,0.5)' : 'none'}"/>
-    </svg>`;
+function updateAllLines() {
+    console.log("Updating all lines...");
     
-    const marker = document.createElement('div');
-    marker.innerHTML = markerSvg;
-    marker.className = 'gcp-marker';
-    marker.style.width = '32px';
-    marker.style.height = '32px';
-    
-    const overlay = {
-        element: marker,
-        location: new OpenSeadragon.Point(point.x, point.y),
-        placement: OpenSeadragon.Placement.BOTTOM,
-        checkResize: false
-    };
-    
-    viewer.addOverlay(overlay);
-
-    if (!isTemp) {
-        makeMarkerDraggable(marker, id);
-    }
-
-    return overlay;
-}
-
-function makeMarkerDraggable(markerElement, id) {
-    let isDragging = false;
-    let startPoint;
-
-    markerElement.addEventListener('mousedown', function(e) {
-        isDragging = true;
-        startPoint = viewer.viewport.pointFromPixel(new OpenSeadragon.Point(e.clientX, e.clientY));
-    });
-
-    viewer.addHandler('mousemove', function(e) {
-        if (isDragging) {
-            const currentPoint = viewer.viewport.pointFromPixel(e.position);
-            const delta = currentPoint.minus(startPoint);
-            const overlay = viewer.getOverlayById(`marker-${id}`);
-            if (overlay) {
-                const newLocation = overlay.location.plus(delta);
-                viewer.updateOverlay(overlay, newLocation);
-                startPoint = currentPoint;
-
-                gcps[id - 1].x = newLocation.x;
-                gcps[id - 1].y = newLocation.y;
-                updateGcpList();
-            }
-        }
-    });
-
-    viewer.addHandler('mouseup', function() {
-        isDragging = false;
-    });
-}
-
-function updateMarkers() {
-    gcps.forEach((gcp, index) => {
-        const marker = viewer.getOverlayById(`marker-${index + 1}`);
-        if (marker) {
-            viewer.updateOverlay(marker, new OpenSeadragon.Point(gcp.x, gcp.y));
-        }
-    });
-}
-
-function updateLines() {
-    lines.forEach((line) => {
-        updateLine(line.overlay, line.start, line.end);
-    });
 }
