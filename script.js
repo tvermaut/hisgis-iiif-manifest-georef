@@ -1,7 +1,14 @@
-document.addEventListener("DOMContentLoaded", async () => {
+window.onload = function () {
     const infoJsonUrlInput = document.getElementById('info-json-url');
 
-    // Controleer of er al een Leaflet-kaart bestaat en verwijder deze
+    // Controleer of het map-element bestaat
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+        console.error("Fout: 'map' container niet gevonden.");
+        return;
+    }
+
+    // Verwijder bestaande kaart als deze al bestaat
     if (window.map !== undefined) {
         window.map.remove();
     }
@@ -50,4 +57,4 @@ document.addEventListener("DOMContentLoaded", async () => {
         infoJsonUrlInput.value = paramUrl;
         loadIIIFLayer(paramUrl);
     }
-});
+};
