@@ -21,7 +21,8 @@ document.addEventListener("DOMContentLoaded", () => {
         zoom: 1,
         crs: L.CRS.Simple,
         preferCanvas: true,
-        maxZoom: 5, // Toestaan om verder in te zoomen
+        maxZoom: 10, // ✅ Toestaan om verder in te zoomen
+        minZoom: -2, // ✅ Toestaan om uit te zoomen
     });
 
     console.log("✅ Leaflet-kaart succesvol geïnitialiseerd!");
@@ -42,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             window.iiifLayer = L.tileLayer.iiif(infoUrl, {
                 fitBounds: true,
-                setMaxBounds: false, // Toestaan om buiten afbeelding te pannen
+                setMaxBounds: false, // ✅ Toestaan om buiten afbeelding te pannen
             }).addTo(map);
             console.log("✅ IIIF-kaartlaag geladen!");
         } catch (error) {
@@ -70,20 +71,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
         startDrawingAxis(id, color) {
             console.log(`🎯 Start tekenen van ${id}-as...`);
-            
+
             let points = [];
-            
+
             const clickHandler = (event) => {
                 points.push(event.latlng);
                 console.log(`📌 Punt ${points.length} gezet op:`, event.latlng);
-                
+
                 if (points.length === 2) {
                     this.addOrUpdateAxis(id, points[0], points[1], color);
                     this.map.off("click", clickHandler);
                     console.log(`✅ ${id}-as getekend!`);
                 }
             };
-        
+
             this.map.on("click", clickHandler);
         }
 
@@ -92,13 +93,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 this.map.removeLayer(this.axes[id]);
                 this.removeMarkers(id);
             }
-            
+
             this.axes[id] = L.polyline([start, end], { color, weight: 3 }).addTo(this.map);
-            
             this.addDraggableMarker(id, start, color, "start");
             this.addDraggableMarker(id, end, color, "end");
-            
+
             this.checkAndGenerateGrid();
+        }
+
+        removeMarkers(id) {
+            if (this.markers[id]) {
+                Object.values(this.markers[id]).forEach(marker => this.map.removeLayer(marker));
+                delete this.markers[id];
+            }
         }
 
         addDraggableMarker(id, position, color, type) {
@@ -110,9 +117,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 iconSize: [20, 20],
                 iconAnchor: [10, 20]
             });
-            
+
             const marker = L.marker(position, { icon, draggable: true }).addTo(this.map);
-            
+
             marker.on("dragend", (event) => {
                 const newPos = event.target.getLatLng();
                 if (type === "start") {
@@ -121,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     this.addOrUpdateAxis(id, this.axes[id].getLatLngs()[0], newPos, color);
                 }
             });
-            
+
             this.markers[id] = this.markers[id] || {};
             this.markers[id][type] = marker;
         }
@@ -140,9 +147,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const x1 = this.axes['x'].getLatLngs()[0];
             const x2 = this.axes['x2'].getLatLngs()[0];
             const y1 = this.axes['y'].getLatLngs()[0];
-            
+
             const pixelPerMeter = Math.abs(x2.lng - x1.lng) / (parseFloat(document.getElementById("x-axis-2-value").value) || 1);
-            
             let gridLines = [];
 
             for (let i = -10; i <= 10; i++) {
@@ -162,23 +168,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const editor = new AxisEditor(map);
 
-    document.getElementById("draw-x-axis").addEventListener("click", () => {
-        console.log("✏️ X-as tekenen...");
-        editor.startDrawingAxis("x", "red");
-    });
-    
-    document.getElementById("draw-x2-axis").addEventListener("click", () => {
-        console.log("✏️ X-as-2 tekenen...");
-        editor.startDrawingAxis("x2", "orange");
-    });
-    
-    document.getElementById("draw-y-axis").addEventListener("click", () => {
-        console.log("✏️ Y-as tekenen...");
-        editor.startDrawingAxis("y", "blue");
-    });
-    
-    document.getElementById("generate-grid").addEventListener("click", () => {
-        console.log("📏 Grid genereren...");
-        editor.generateGrid();
-    });
+    // ✅ Event-listeners correct toegevoegd
+    document.getElementById("draw-x-axis").addEventListener("click", () => editor.startDrawingAxis("x", "blue"));
+    document.getElementById("draw-x2-axis").addEventListener("click", () => editor.startDrawingAxis("x2", "orange"));
+    document.getElementById("draw-y-axis").addEventListener("click", () => editor.startDrawingAxis("y", "red"));
+    document.getElementById("generate-grid").addEventListener("click", () => editor.generateGrid());
 });
