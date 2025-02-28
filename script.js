@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
             this.currentAxisId = null;
             this.currentAxisColor = null;
             this.currentAxisPoints = [];
+            this.iiifLayer = null;
         }
 
         startDrawingAxis(axisId, color) {
@@ -143,6 +144,34 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log(`🔄 Gemeten rotatiehoek: ${angleDeg.toFixed(3)}°`);
             document.getElementById("measured-rotation").textContent = `${angleDeg.toFixed(3)}°`;
         }
+
+        loadIIIFLayer(infoJsonUrl) {
+            console.log(`🔄 Laden van IIIF-afbeelding van: ${infoJsonUrl}`);
+
+            // Haal de info.json op
+            fetch(infoJsonUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.tiles && data.tiles[0] && data.tiles[0].scaleFactors) {
+                        const tileWidth = data.tiles[0].width;
+                        const tileHeight = data.tiles[0].height;
+                        const scaleFactor = data.tiles[0].scaleFactors[0];
+
+                        const imageUrl = data.tiles[0].url;
+                        const bounds = [[0, 0], [tileHeight * scaleFactor, tileWidth * scaleFactor]];
+
+                        // Laad de IIIF-afbeelding
+                        this.iiifLayer = L.imageOverlay(imageUrl, bounds).addTo(this.map);
+
+                        console.log("✅ IIIF-afbeelding succesvol geladen!");
+                    } else {
+                        console.error("❌ Fout bij het ophalen van de IIIF info.json of de tile-data.");
+                    }
+                })
+                .catch(error => {
+                    console.error("❌ Er is een fout opgetreden bij het ophalen van de IIIF-afbeelding:", error);
+                });
+        }
     }
 
     const editor = new AxisEditor(map);
@@ -156,4 +185,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // Event listener voor klikken op de kaart
     map.on('click', (event) => editor.handleMapClick(event));
 
+    // Event listener voor het laden van de IIIF-afbeelding
+    document.getElementById("load-iiif").addEventListener("click", () => {
+        const infoJsonUrl = document.getElementById("info-json-url").value;
+        if (infoJsonUrl) {
+            editor.loadIIIFLayer(infoJsonUrl);
+        } else {
+            console.warn("⚠️ Geen info.json URL ingevoerd.");
+        }
+    });
 });
