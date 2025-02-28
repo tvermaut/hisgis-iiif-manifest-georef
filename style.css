@@ -85,13 +85,11 @@ button:hover {
     border: 2px solid white;
 }
 .axis-marker {
-    color: black;
-    font-size: 18px;
-    font-weight: bold;
-    text-align: center;
-    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .leaflet-interactive {
-    cursor: crosshair;
+    cursor: default; /* Geen handje bij lijnen */
 }
