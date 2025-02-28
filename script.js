@@ -20,30 +20,46 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         fetch(infoUrl)
-            .then(response => response.json())
-            .then(data => {
-                console.log("✅ IIIF info.json geladen:", data);
-
-                if (!data.tiles || !data.tileSize || !data.height || !data.width || !data["@id"]) {
-                    console.error("❌ Verkeerd geformatteerde IIIF info.json.");
-                    return;
+        .then(response => response.json())
+        .then(data => {
+            console.log("✅ JSON Response:", data);
+    
+            const baseUrl = data["@id"];
+            const tileSize = data.tiles[0].width;  // Dit is 256
+            const maxZoom = Math.max(...data.tiles[0].scaleFactors); // Hoogste schaalfactor
+            const imageWidth = data.width;
+            const imageHeight = data.height;
+    
+            console.log("ℹ️ Base URL:", baseUrl);
+            console.log("ℹ️ Tile Size:", tileSize);
+            console.log("ℹ️ Max Zoom Level:", maxZoom);
+            console.log("ℹ️ Image Dimensions:", imageWidth, "x", imageHeight);
+    
+            // Handmatig een correcte tile-URL bouwen
+            const customTileUrl = function(coords) {
+                const scaleFactor = Math.pow(2, maxZoom - coords.z);
+                const x = coords.x * tileSize * scaleFactor;
+                const y = coords.y * tileSize * scaleFactor;
+    
+                if (x >= imageWidth || y >= imageHeight) {
+                    return ""; // Voorkom ongeldige requests
                 }
-
-                const baseUrl = data["@id"];
-                const tileSize = data.tileSize || data.tiles[0].width;
-                const maxZoom = data.tiles[0].scaleFactors.length - 1;
-                const scaleFactors = data.tiles[0].scaleFactors;
-
-                const iiifLayer = L.tileLayer.iiif(baseUrl, {
-                    tileSize: tileSize,
-                    maxZoom: maxZoom,
-                    quality: "default",
-                    fitBounds: true
-                });
-
-                iiifLayer.addTo(map);
-            })
-            .catch(error => console.error("❌ Fout bij laden van IIIF:", error));
+    
+                return `${baseUrl}/${x},${y},${tileSize},${tileSize}/full/0/default.jpg`;
+            };
+    
+            // Voeg de laag toe aan Leaflet
+            const iiifLayer = L.tileLayer(customTileUrl, {
+                tileSize: tileSize,
+                maxZoom: maxZoom,
+                noWrap: true,
+                bounds: [[0, 0], [imageHeight, imageWidth]]
+            }).addTo(map);
+    
+            console.log("✅ IIIF-kaartlaag succesvol geladen!");
+        })
+        .catch(error => console.error("❌ Fout bij laden van IIIF:", error));
+    
     });
 
     // X-as tekenen (rood)
