@@ -10,10 +10,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("✅ Leaflet-kaart succesvol geïnitialiseerd!");
 
-    // Laad IIIF-afbeelding na invoeren van info.json
+    // Laad IIIF-afbeelding
     document.getElementById("load-iiif").addEventListener("click", () => {
         const infoUrl = document.getElementById("info-json-url").value;
-        
+
         if (!infoUrl) {
             alert("Voer een geldige IIIF info.json URL in!");
             return;
@@ -23,9 +23,21 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(response => response.json())
             .then(data => {
                 console.log("✅ IIIF info.json geladen:", data);
-                
-                const iiifLayer = L.tileLayer.iiif(infoUrl.replace("info.json", "{z}/{x}/{y}.jpg"), {
-                    attribution: "IIIF Afbeelding",
+
+                if (!data.tiles || !data.tileSize || !data.height || !data.width || !data["@id"]) {
+                    console.error("❌ Verkeerd geformatteerde IIIF info.json.");
+                    return;
+                }
+
+                const baseUrl = data["@id"];
+                const tileSize = data.tileSize || data.tiles[0].width;
+                const maxZoom = data.tiles[0].scaleFactors.length - 1;
+                const scaleFactors = data.tiles[0].scaleFactors;
+
+                const iiifLayer = L.tileLayer.iiif(baseUrl, {
+                    tileSize: tileSize,
+                    maxZoom: maxZoom,
+                    quality: "default",
                     fitBounds: true
                 });
 
