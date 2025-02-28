@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Initialiseer Leaflet-kaart
     const map = L.map("map", {
-        center: [0, 0], // Wordt aangepast zodra de afbeelding wordt geladen
+        center: [0, 0], 
         zoom: 1,
         crs: L.CRS.Simple,
         preferCanvas: true,
@@ -39,17 +39,54 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function loadIIIFLayer(infoUrl) {
-        // Verwijder vorige IIIF-laag als die bestaat
         if (window.iiifLayer) {
             map.removeLayer(window.iiifLayer);
         }
 
-        // **Gebruik Leaflet-IIIF om de afbeelding correct te laden**
         window.iiifLayer = L.tileLayer.iiif(infoUrl, {
-            fitBounds: true,  // Automatisch inzoomen op de afbeelding
-            setMaxBounds: true,  // Zorgt dat de gebruiker niet buiten de afbeelding kan scrollen
+            fitBounds: true,  
+            setMaxBounds: true,
         }).addTo(map);
 
         console.log("✅ IIIF-kaartlaag succesvol geladen!");
     }
+
+    // 🖌️ Lijn tekenen via muisklikken
+    let drawMode = null;
+    let tempLine = null;
+    let startPoint = null;
+
+    function enableDrawMode(mode) {
+        drawMode = mode;
+        startPoint = null;
+        if (tempLine) {
+            map.removeLayer(tempLine);
+            tempLine = null;
+        }
+        console.log(`🖍️ Tekenen van een ${mode === 'red' ? 'X-as (rood)' : 'Y-as (blauw)'} gestart! Klik twee punten.`);
+    }
+
+    map.on("click", (e) => {
+        if (!drawMode) return;
+
+        if (!startPoint) {
+            startPoint = e.latlng;
+            console.log(`📍 Startpunt geselecteerd: ${startPoint.lat}, ${startPoint.lng}`);
+        } else {
+            const endPoint = e.latlng;
+            console.log(`📍 Eindpunt geselecteerd: ${endPoint.lat}, ${endPoint.lng}`);
+
+            const color = drawMode === "red" ? "red" : "blue";
+            tempLine = L.polyline([startPoint, endPoint], { color, weight: 3 }).addTo(map);
+            console.log(`✅ Lijn getekend in ${color}`);
+            
+            // Reset
+            drawMode = null;
+            startPoint = null;
+        }
+    });
+
+    // Buttons om lijnen te tekenen
+    document.getElementById("draw-x-axis").addEventListener("click", () => enableDrawMode("red"));
+    document.getElementById("draw-y-axis").addEventListener("click", () => enableDrawMode("blue"));
 });

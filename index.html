@@ -16,34 +16,23 @@
     <div id="map"></div>
 
     <!-- Controlepaneel rechtsboven -->
-    <div id="controls">
-        <h1>Historische Kaart Editor</h1>
-
-        <label for="info-json-url">IIIF info.json URL:</label>
-        <input type="text" id="info-json-url" placeholder="Vul de info.json URL in">
-        <button id="load-iiif">📷 Laad Afbeelding</button>
-
-        <label for="scale-select">Schaal:</label>
-        <select id="scale-select">
-            <option value="2500">1:2500</option>
-            <option value="1250">1:1250</option>
-            <option value="5000">1:5000</option>
-        </select>
-
-        <div class="input-group">
-            <label for="x-axis-value">X-as waarde:</label>
-            <input type="number" id="x-axis-value" placeholder="X" class="small-input">
-            <button id="draw-x-axis" class="edit-btn">✏️</button>
+    <div id="editor-container">
+        <div id="map"></div>
+    
+        <div id="controls">
+            <h1>Historische Kaart Editor</h1>
+    
+            <label for="info-json-url">IIIF info.json URL:</label>
+            <input type="text" id="info-json-url" placeholder="Vul de info.json URL in">
+            <button id="load-iiif">📥 Laad Afbeelding</button>
+    
+            <label for="x-axis-value">X-as:</label>
+            <button id="draw-x-axis">✏️ Teken X-as</button>
+    
+            <label for="y-axis-value">Y-as:</label>
+            <button id="draw-y-axis">✏️ Teken Y-as</button>
         </div>
-
-        <div class="input-group">
-            <label for="y-axis-value">Y-as waarde:</label>
-            <input type="number" id="y-axis-value" placeholder="Y" class="small-input">
-            <button id="draw-y-axis" class="edit-btn">✏️</button>
-        </div>
-
-        <button id="generate-grid">Genereer Ruitkruisnet</button>
-    </div>
+    </div>    
 
     <script src="leaflet-iiif.js"></script>
     <script src="script.js"></script>
