@@ -17,20 +17,22 @@
 
     <!-- Controlepaneel rechtsboven -->
     <div id="editor-container">
-        <div id="map"></div>
-    
         <div id="controls">
             <h1>Historische Kaart Editor</h1>
-    
+
             <label for="info-json-url">IIIF info.json URL:</label>
             <input type="text" id="info-json-url" placeholder="Vul de info.json URL in">
-            <button id="load-iiif">📥 Laad Afbeelding</button>
-    
-            <label for="x-axis-value">X-as:</label>
-            <button id="draw-x-axis">✏️ Teken X-as</button>
-    
-            <label for="y-axis-value">Y-as:</label>
-            <button id="draw-y-axis">✏️ Teken Y-as</button>
+            <button id="load-iiif" title="Laad Afbeelding">📥</button>
+
+            <div class="axis-controls">
+                <label>X-as:</label>
+                <button id="draw-x-axis" title="Teken X-as">❌</button>
+            </div>
+
+            <div class="axis-controls">
+                <label>Y-as:</label>
+                <button id="draw-y-axis" title="Teken Y-as">🔷</button>
+            </div>
         </div>
     </div>    
 

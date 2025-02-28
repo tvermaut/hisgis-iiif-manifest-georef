@@ -51,42 +51,63 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("✅ IIIF-kaartlaag succesvol geladen!");
     }
 
-    // 🖌️ Lijn tekenen via muisklikken
+    class AxisEditor {
+        constructor(map) {
+            this.map = map;
+            this.axes = {};
+            this.dragging = null;
+        }
+
+        addOrUpdateAxis(id, start, end, color) {
+            if (this.axes[id]) {
+                this.map.removeLayer(this.axes[id]);
+            }
+            this.axes[id] = L.polyline([start, end], { color, weight: 3 }).addTo(this.map);
+        }
+
+        enableDragging(axisId) {
+            if (!this.axes[axisId]) return;
+            this.axes[axisId].eachLatLng((latlng, index) => {
+                let marker = L.marker(latlng, {
+                    draggable: true,
+                    icon: L.divIcon({ className: 'draggable-marker' })
+                }).addTo(this.map);
+                marker.on('drag', (event) => {
+                    let newLatLng = event.target.getLatLng();
+                    let latlngs = this.axes[axisId].getLatLngs();
+                    latlngs[index] = newLatLng;
+                    this.axes[axisId].setLatLngs(latlngs);
+                });
+            });
+        }
+    }
+
+    const editor = new AxisEditor(map);
     let drawMode = null;
-    let tempLine = null;
     let startPoint = null;
 
     function enableDrawMode(mode) {
         drawMode = mode;
         startPoint = null;
-        if (tempLine) {
-            map.removeLayer(tempLine);
-            tempLine = null;
-        }
-        console.log(`🖍️ Tekenen van een ${mode === 'red' ? 'X-as (rood)' : 'Y-as (blauw)'} gestart! Klik twee punten.`);
+        console.log(`🖍️ Tekenen van een ${mode === 'x' ? 'X-as (rood)' : 'Y-as (blauw)'} gestart! Klik twee punten.`);
     }
 
     map.on("click", (e) => {
         if (!drawMode) return;
-
         if (!startPoint) {
             startPoint = e.latlng;
             console.log(`📍 Startpunt geselecteerd: ${startPoint.lat}, ${startPoint.lng}`);
         } else {
             const endPoint = e.latlng;
             console.log(`📍 Eindpunt geselecteerd: ${endPoint.lat}, ${endPoint.lng}`);
-
-            const color = drawMode === "red" ? "red" : "blue";
-            tempLine = L.polyline([startPoint, endPoint], { color, weight: 3 }).addTo(map);
-            console.log(`✅ Lijn getekend in ${color}`);
-            
-            // Reset
+            const color = drawMode === "x" ? "red" : "blue";
+            editor.addOrUpdateAxis(drawMode, startPoint, endPoint, color);
+            editor.enableDragging(drawMode);
             drawMode = null;
             startPoint = null;
         }
     });
 
-    // Buttons om lijnen te tekenen
-    document.getElementById("draw-x-axis").addEventListener("click", () => enableDrawMode("red"));
-    document.getElementById("draw-y-axis").addEventListener("click", () => enableDrawMode("blue"));
+    document.getElementById("draw-x-axis").addEventListener("click", () => enableDrawMode("x"));
+    document.getElementById("draw-y-axis").addEventListener("click", () => enableDrawMode("y"));
 });
