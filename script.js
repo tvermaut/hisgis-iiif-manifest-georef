@@ -147,30 +147,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
         loadIIIFLayer(infoJsonUrl) {
             console.log(`🔄 Laden van IIIF-afbeelding van: ${infoJsonUrl}`);
-
-            // Haal de info.json op
-            fetch(infoJsonUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.tiles && data.tiles[0] && data.tiles[0].scaleFactors) {
-                        const tileWidth = data.tiles[0].width;
-                        const tileHeight = data.tiles[0].height;
-                        const scaleFactor = data.tiles[0].scaleFactors[0];
-
-                        const imageUrl = data.tiles[0].url;
-                        const bounds = [[0, 0], [tileHeight * scaleFactor, tileWidth * scaleFactor]];
-
-                        // Laad de IIIF-afbeelding
-                        this.iiifLayer = L.imageOverlay(imageUrl, bounds).addTo(this.map);
-
-                        console.log("✅ IIIF-afbeelding succesvol geladen!");
-                    } else {
-                        console.error("❌ Fout bij het ophalen van de IIIF info.json of de tile-data.");
-                    }
-                })
-                .catch(error => {
-                    console.error("❌ Er is een fout opgetreden bij het ophalen van de IIIF-afbeelding:", error);
-                });
+        
+            // Gebruik de info.json URL om de IIIF image laag te laden
+            try {
+                // Voeg de IIIF image layer toe met L.TileLayer.iiif
+                this.iiifLayer = L.TileLayer.iiif(infoJsonUrl, {
+                    bounds: [[0, 0], [this.map.getSize().y, this.map.getSize().x]],  // Zorg ervoor dat de kaart een grootte heeft
+                    minZoom: 0,
+                    maxZoom: 5,  // Pas de zoomniveaus aan zoals nodig
+                    continuousWorld: true,
+                    noWrap: true
+                }).addTo(this.map);
+                
+                console.log("✅ IIIF-afbeelding succesvol geladen!");
+            } catch (error) {
+                console.error("❌ Er is een fout opgetreden bij het ophalen van de IIIF-afbeelding:", error);
+            }
         }
     }
 
