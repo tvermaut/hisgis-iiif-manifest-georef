@@ -158,4 +158,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start de AxisEditor
     const editor = new AxisEditor(map);
+
+        // Event listeners voor knoppen
+        document.getElementById("draw-x-axis").addEventListener("click", () => editor.startDrawingAxis("x", "blue"));
+        document.getElementById("draw-x2-axis").addEventListener("click", () => editor.startDrawingAxis("x2", "orange"));
+        document.getElementById("draw-y-axis").addEventListener("click", () => editor.startDrawingAxis("y", "red"));
+        document.getElementById("generate-grid").addEventListener("click", () => editor.generateGrid());
 });
