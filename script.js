@@ -171,4 +171,12 @@ document.addEventListener("DOMContentLoaded", () => {
             startPoint = null;
         }
     });
+
+    document.getElementById("draw-x-axis").addEventListener("click", () => {
+        enableDrawMode("x");
+    });
+    
+    document.getElementById("draw-y-axis").addEventListener("click", () => {
+        enableDrawMode("y");
+    });
 });
