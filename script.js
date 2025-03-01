@@ -151,10 +151,11 @@ class AxisEditor {
         }
     
         // Maak een nieuwe IIIF-laag
-        const iiifLayer = L.tileLayer.iiif(url, {
-            quality: 'default',
+        L.tileLayer.iiif('http://example.com/iiifimage.jp2/info.json', {
             fitBounds: true
-        }).addTo(this.map);
+          }).addTo(map).on('tileerror', function(error, tile) {
+            console.log('Tegel laad fout:', error, tile);
+          });
     
         // Bereken handmatig de bounds als fitBounds niet werkt zoals verwacht
         fetch(url)
