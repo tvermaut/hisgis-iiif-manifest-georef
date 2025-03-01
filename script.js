@@ -156,21 +156,25 @@ class AxisEditor {
         }).addTo(this.map);
     
         iiifLayer.on('load', () => {
-            if (iiifLayer.x && iiifLayer.x.options) {
-                const imageSize = iiifLayer.x.options.sizes ? iiifLayer.x.options.sizes[0] : iiifLayer.x.options;
-                if (imageSize && imageSize.width && imageSize.height) {
-                    const imageBounds = L.latLngBounds([
-                        [0, 0],
-                        [imageSize.height, imageSize.width]
-                    ]);
-                    this.map.fitBounds(imageBounds);
+            try {
+                if (iiifLayer.x && iiifLayer.x.options) {
+                    const imageSize = iiifLayer.x.options.sizes ? iiifLayer.x.options.sizes[0] : null;
+                    if (imageSize && imageSize.width && imageSize.height) {
+                        const imageBounds = L.latLngBounds([
+                            [0, 0],
+                            [imageSize.height, imageSize.width]
+                        ]);
+                        this.map.fitBounds(imageBounds);
+                        console.log("✅ IIIF-afbeelding geladen!");
+                    } else {
+                        throw new Error("❌ Missing or invalid 'sizes' property in info.json");
+                    }
                 } else {
-                    console.warn('⚠️ Unable to determine image bounds');
+                    throw new Error("❌ Unexpected IIIF layer structure");
                 }
-            } else {
-                console.warn('⚠️ IIIF layer structure is unexpected');
+            } catch (error) {
+                console.error(error.message);
             }
-            console.log("✅ IIIF-afbeelding geladen!");
         });
     }
     
