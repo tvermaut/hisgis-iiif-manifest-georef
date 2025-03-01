@@ -241,25 +241,43 @@ class AxisEditor {
         const gridLayer = L.layerGroup().addTo(this.map);
         const bounds = this.map.getBounds();
         const center = bounds.getCenter();
-
+        const centerPoint = this.map.latLngToLayerPoint(center);
+    
         const gridPixels = gridDistance * pixelsPerMeter;
         const diagonalPixels = Math.sqrt(Math.pow(this.map.getSize().x, 2) + Math.pow(this.map.getSize().y, 2));
         const gridLines = Math.ceil(diagonalPixels / gridPixels) * 2;
-
+    
         for (let i = -gridLines; i <= gridLines; i++) {
             // Verticale lijnen
-            const start = this.map.layerPointToLatLng(L.point(-diagonalPixels, i * gridPixels).rotate(angle, [0, 0]));
-            const end = this.map.layerPointToLatLng(L.point(diagonalPixels, i * gridPixels).rotate(angle, [0, 0]));
+            const startPoint = this.rotatePoint(L.point(-diagonalPixels, i * gridPixels), angle, centerPoint);
+            const endPoint = this.rotatePoint(L.point(diagonalPixels, i * gridPixels), angle, centerPoint);
+            const start = this.map.layerPointToLatLng(startPoint);
+            const end = this.map.layerPointToLatLng(endPoint);
             L.polyline([start, end], {color: 'rgba(255, 0, 0, 0.5)', weight: 1}).addTo(gridLayer);
-
+    
             // Horizontale lijnen
-            const hStart = this.map.layerPointToLatLng(L.point(i * gridPixels, -diagonalPixels).rotate(angle, [0, 0]));
-            const hEnd = this.map.layerPointToLatLng(L.point(i * gridPixels, diagonalPixels).rotate(angle, [0, 0]));
+            const hStartPoint = this.rotatePoint(L.point(i * gridPixels, -diagonalPixels), angle, centerPoint);
+            const hEndPoint = this.rotatePoint(L.point(i * gridPixels, diagonalPixels), angle, centerPoint);
+            const hStart = this.map.layerPointToLatLng(hStartPoint);
+            const hEnd = this.map.layerPointToLatLng(hEndPoint);
             L.polyline([hStart, hEnd], {color: 'rgba(255, 0, 0, 0.5)', weight: 1}).addTo(gridLayer);
         }
     }
 
 }
+
+rotatePoint(point, angle, origin) {
+    const radians = angle * Math.PI / 180;
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
+    const dx = point.x - origin.x;
+    const dy = point.y - origin.y;
+    return L.point(
+        origin.x + dx * cos - dy * sin,
+        origin.y + dx * sin + dy * cos
+    );
+}
+
 
 // Wacht tot de DOM geladen is voordat we de editor starten
 document.addEventListener('DOMContentLoaded', () => {
