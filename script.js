@@ -237,6 +237,18 @@ class AxisEditor {
         return Math.atan2(dy, dx) * 180 / Math.PI;
     }
 
+    rotatePoint(point, angle, origin) {
+        const radians = angle * Math.PI / 180;
+        const cos = Math.cos(radians);
+        const sin = Math.sin(radians);
+        const dx = point.x - origin.x;
+        const dy = point.y - origin.y;
+        return L.point(
+            origin.x + dx * cos - dy * sin,
+            origin.y + dx * sin + dy * cos
+        );
+    }
+
     drawGrid(gridDistance, pixelsPerMeter, angle) {
         const gridLayer = L.layerGroup().addTo(this.map);
         const bounds = this.map.getBounds();
@@ -265,19 +277,6 @@ class AxisEditor {
     }
 
 }
-
-rotatePoint(point, angle, origin) {
-    const radians = angle * Math.PI / 180;
-    const cos = Math.cos(radians);
-    const sin = Math.sin(radians);
-    const dx = point.x - origin.x;
-    const dy = point.y - origin.y;
-    return L.point(
-        origin.x + dx * cos - dy * sin,
-        origin.y + dx * sin + dy * cos
-    );
-}
-
 
 // Wacht tot de DOM geladen is voordat we de editor starten
 document.addEventListener('DOMContentLoaded', () => {
