@@ -151,7 +151,8 @@ class AxisEditor {
         }
     
         // Maak een nieuwe IIIF-laag
-        var tl = L.tileLayer.iiif(url, {fitBounds: true})
+        var tl = L.tileLayer;
+        tl.iiif(url, {fitBounds: true})
         tl.addTo(map).on('tileerror', function(error, tile) {
             console.log('Tegel laad fout:', error, tile);
           });
