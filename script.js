@@ -151,9 +151,8 @@ class AxisEditor {
         }
     
         // Maak een nieuwe IIIF-laag
-        L.tileLayer.iiif(url, {
-            fitBounds: true
-          }).addTo(map).on('tileerror', function(error, tile) {
+        var tl = L.tileLayer.iiif(url, {fitBounds: true})
+        tl.addTo(map).on('tileerror', function(error, tile) {
             console.log('Tegel laad fout:', error, tile);
           });
     
@@ -196,10 +195,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start de AxisEditor
     const editor = new AxisEditor(map);
-
         // Event listeners voor knoppen
         document.getElementById("draw-x-axis").addEventListener("click", () => editor.startDrawingAxis("x-axis"));
         document.getElementById("draw-x2-axis").addEventListener("click", () => editor.startDrawingAxis("x-axis-2"));
         document.getElementById("draw-y-axis").addEventListener("click", () => editor.startDrawingAxis("y-axis"));
         document.getElementById("generate-grid").addEventListener("click", () => editor.generateGrid());
-});
+        });
