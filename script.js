@@ -292,19 +292,19 @@ class AxisEditor {
         const southEast = bounds.getSouthEast();
         const startPoint = this.map.latLngToLayerPoint(northWest);
         const endPoint = this.map.latLngToLayerPoint(southEast);
-        const angleRad = optimalAngle * Math.PI / 180;
-        
+
         const rotatedStart = this.rotatePoint(startPoint, -optimalAngle, startPoint);
         const rotatedEnd = this.rotatePoint(endPoint, -optimalAngle, startPoint);
-    
+
         let startX = rotatedStart.x;
         let startY = rotatedStart.y;
         let endX = rotatedEnd.x;
         let endY = rotatedEnd.y;
-    
-        let firstX = Math.ceil(startX / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
-        let firstY = Math.ceil(startY / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
-    
+
+        let firstX = Math.floor(startX / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
+        let firstY = Math.floor(startY / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
+
+        // Teken verticale lijnen
         for (let x = firstX; x <= endX; x += gridDistance * pixelsPerMeter) {
             const point1 = this.rotatePoint(L.point(x, startY), optimalAngle, startPoint);
             const point2 = this.rotatePoint(L.point(x, endY), optimalAngle, startPoint);
@@ -312,7 +312,8 @@ class AxisEditor {
             const latlng2 = this.map.layerPointToLatLng(point2);
             L.polyline([latlng1, latlng2], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
         }
-    
+
+        // Teken horizontale lijnen
         for (let y = firstY; y <= endY; y += gridDistance * pixelsPerMeter) {
             const point1 = this.rotatePoint(L.point(startX, y), optimalAngle, startPoint);
             const point2 = this.rotatePoint(L.point(endX, y), optimalAngle, startPoint);
