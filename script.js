@@ -243,7 +243,7 @@ class AxisEditor {
         const roundedScale = Math.round(scale / 50) * 50; // Rond af naar dichtstbijzijnde 50
 
         // Toon de kaartschaal in het paneel
-        document.getElementById('map-scale').textContent = `1:${roundedScale}`;
+        document.getElementById('measured-rotation').textContent = `1:${roundedScale}`;
 
         // Bereken rotatiehoek (vereenvoudigd, zonder regressie)
         const xAngle = this.calculateAngle(xAxis.polyline.getLatLngs());
