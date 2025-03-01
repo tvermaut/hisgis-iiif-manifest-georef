@@ -288,23 +288,37 @@ class AxisEditor {
     drawGrid(gridDistance, pixelsPerMeter, optimalAngle) {
         const gridLayer = L.layerGroup().addTo(this.map);
         const bounds = this.map.getBounds();
-        const center = bounds.getCenter();
-        const centerPoint = this.map.latLngToLayerPoint(center);
+        const northWest = bounds.getNorthWest();
+        const southEast = bounds.getSouthEast();
+        const startPoint = this.map.latLngToLayerPoint(northWest);
+        const endPoint = this.map.latLngToLayerPoint(southEast);
+        const angleRad = optimalAngle * Math.PI / 180;
+        
+        const rotatedStart = this.rotatePoint(startPoint, -optimalAngle, startPoint);
+        const rotatedEnd = this.rotatePoint(endPoint, -optimalAngle, startPoint);
     
-        const gridPixels = gridDistance * pixelsPerMeter;
-        const diagonalMeters = Math.sqrt(Math.pow(bounds.getEast() - bounds.getWest(), 2) + Math.pow(bounds.getNorth() - bounds.getSouth(), 2)) / 2;
-        const gridLines = Math.ceil(diagonalMeters / gridDistance) * 2;
+        let startX = rotatedStart.x;
+        let startY = rotatedStart.y;
+        let endX = rotatedEnd.x;
+        let endY = rotatedEnd.y;
     
-        for (let i = -gridLines; i <= gridLines; i++) {
-            // Verticale lijnen
-            const startLatlng = this.map.layerPointToLatLng(this.rotatePoint(L.point(-diagonalMeters * pixelsPerMeter, i * gridPixels), optimalAngle, centerPoint));
-            const endLatlng = this.map.layerPointToLatLng(this.rotatePoint(L.point(diagonalMeters * pixelsPerMeter, i * gridPixels), optimalAngle, centerPoint));
-            L.polyline([startLatlng, endLatlng], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
+        let firstX = Math.ceil(startX / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
+        let firstY = Math.ceil(startY / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
     
-            // Horizontale lijnen
-            const hStartLatlng = this.map.layerPointToLatLng(this.rotatePoint(L.point(i * gridPixels, -diagonalMeters * pixelsPerMeter), optimalAngle, centerPoint));
-            const hEndLatlng = this.map.layerPointToLatLng(this.rotatePoint(L.point(i * gridPixels, diagonalMeters * pixelsPerMeter), optimalAngle, centerPoint));
-            L.polyline([hStartLatlng, hEndLatlng], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
+        for (let x = firstX; x <= endX; x += gridDistance * pixelsPerMeter) {
+            const point1 = this.rotatePoint(L.point(x, startY), optimalAngle, startPoint);
+            const point2 = this.rotatePoint(L.point(x, endY), optimalAngle, startPoint);
+            const latlng1 = this.map.layerPointToLatLng(point1);
+            const latlng2 = this.map.layerPointToLatLng(point2);
+            L.polyline([latlng1, latlng2], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
+        }
+    
+        for (let y = firstY; y <= endY; y += gridDistance * pixelsPerMeter) {
+            const point1 = this.rotatePoint(L.point(startX, y), optimalAngle, startPoint);
+            const point2 = this.rotatePoint(L.point(endX, y), optimalAngle, startPoint);
+            const latlng1 = this.map.layerPointToLatLng(point1);
+            const latlng2 = this.map.layerPointToLatLng(point2);
+            L.polyline([latlng1, latlng2], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
         }
     }
     
