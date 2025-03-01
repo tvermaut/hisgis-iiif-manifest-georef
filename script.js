@@ -150,32 +150,35 @@ class AxisEditor {
             return;
         }
     
+        // Maak een nieuwe IIIF-laag
         const iiifLayer = L.tileLayer.iiif(url, {
             quality: 'default',
             fitBounds: true
         }).addTo(this.map);
     
-        iiifLayer.on('load', () => {
-            try {
-                if (iiifLayer.x && iiifLayer.x.options) {
-                    const imageSize = iiifLayer.x.options.sizes ? iiifLayer.x.options.sizes[0] : null;
-                    if (imageSize && imageSize.width && imageSize.height) {
-                        const imageBounds = L.latLngBounds([
-                            [0, 0],
-                            [imageSize.height, imageSize.width]
-                        ]);
-                        this.map.fitBounds(imageBounds);
-                        console.log("✅ IIIF-afbeelding geladen!");
-                    } else {
-                        throw new Error("❌ Missing or invalid 'sizes' property in info.json");
-                    }
+        // Bereken handmatig de bounds als fitBounds niet werkt zoals verwacht
+        fetch(url)
+            .then(response => response.json())
+            .then(info => {
+                const width = info.width;
+                const height = info.height;
+    
+                if (width && height) {
+                    // Stel bounds in op basis van breedte en hoogte
+                    const imageBounds = L.latLngBounds([
+                        [0, 0],
+                        [height, width]
+                    ]);
+    
+                    this.map.fitBounds(imageBounds);
+                    console.log("✅ IIIF-afbeelding geladen!");
                 } else {
-                    throw new Error("❌ Unexpected IIIF layer structure");
+                    console.warn("⚠️ Breedte of hoogte ontbreekt in info.json");
                 }
-            } catch (error) {
-                console.error(error.message);
-            }
-        });
+            })
+            .catch(error => {
+                console.error("❌ Fout bij het laden van info.json:", error);
+            });
     }
     
 }
