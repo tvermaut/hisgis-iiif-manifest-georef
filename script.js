@@ -5,8 +5,11 @@ class AxisEditor {
         this.axes = {};
         this.currentAxisId = null;
         this.currentDrawing = false;
-        this.startMarker = null;
-        this.endMarker = null;
+        this.axisColors = {
+            'x-axis': 'red',
+            'y-axis': 'blue',
+            'x-axis-2': 'orange'
+        };
         this.init();
     }
 
@@ -57,7 +60,7 @@ class AxisEditor {
 
         // Teken de as als er twee punten zijn aangeklikt
         if (this.axes[this.currentAxisId].length === 2) {
-            this.addOrUpdateAxis(this.currentAxisId, this.axes[this.currentAxisId], 'blue');
+            this.addOrUpdateAxis(this.currentAxisId, this.axes[this.currentAxisId], this.axisColors[this.currentAxisId]);
             this.currentDrawing = false;
             this.map.getContainer().style.cursor = ''; // Terug naar de standaardcursor
         }
@@ -65,17 +68,31 @@ class AxisEditor {
 
     // Methode voor het toevoegen of updaten van een as
     addOrUpdateAxis(axisId, latlngs, color) {
-        // Verwijder oude markers als er al een as is getekend
-        this.removeMarkers(axisId);
+        // Verwijder oude polyline als er al een as is getekend
+        if (this.axes[axisId] && this.axes[axisId].polyline) {
+            this.map.removeLayer(this.axes[axisId].polyline);
+        }
 
         // Maak een nieuwe polyline aan voor de as
         const polyline = L.polyline(latlngs, { color: color, weight: 2 }).addTo(this.map);
 
         // Voeg markers toe aan het begin en het einde van de lijn
-        this.addMarkersToLine(polyline, color);
+        this.addMarkersToLine(axisId, polyline, color);
 
-        // Sla de lijn op in de axes
-        this.axes[axisId] = polyline;
+        // Sla de lijn en markers op in de axes
+        this.axes[axisId] = {
+            polyline: polyline,
+            startMarker: this.axes[axisId].startMarker,
+            endMarker: this.axes[axisId].endMarker
+        };
+    }
+
+    updateAxisLine(axisId) {
+        const axis = this.axes[axisId];
+        if (axis && axis.polyline && axis.startMarker && axis.endMarker) {
+            const newLatLngs = [axis.startMarker.getLatLng(), axis.endMarker.getLatLng()];
+            axis.polyline.setLatLngs(newLatLngs);
+        }
     }
 
     // Methode voor het verwijderen van oude markers
@@ -89,18 +106,27 @@ class AxisEditor {
     }
 
     // Voeg SVG-icoontjes als markers toe bij het begin en het einde van de lijn
-    addMarkersToLine(line, color) {
+    addMarkersToLine(axisId, line, color) {
         const latlngs = line.getLatLngs();
-    
-        // Verwijder bestaande markers
-        if (this.startMarker) this.map.removeLayer(this.startMarker);
-        if (this.endMarker) this.map.removeLayer(this.endMarker);
-    
-        // Voeg marker aan het begin van de lijn toe
-        this.startMarker = L.marker(latlngs[0], { icon: this.createSvgIcon(color) }).addTo(this.map);
-    
-        // Voeg marker aan het einde van de lijn toe
-        this.endMarker = L.marker(latlngs[latlngs.length - 1], { icon: this.createSvgIcon(color) }).addTo(this.map);
+
+        // Functie om marker te maken of bij te werken
+        const createOrUpdateMarker = (marker, latlng) => {
+            if (marker) {
+                marker.setLatLng(latlng);
+            } else {
+                marker = L.marker(latlng, {
+                    icon: this.createSvgIcon(color),
+                    draggable: true
+                }).addTo(this.map);
+
+                marker.on('drag', () => this.updateAxisLine(axisId));
+            }
+            return marker;
+        };
+
+        // Maak of update start- en eindmarkers
+        this.axes[axisId].startMarker = createOrUpdateMarker(this.axes[axisId].startMarker, latlngs[0]);
+        this.axes[axisId].endMarker = createOrUpdateMarker(this.axes[axisId].endMarker, latlngs[latlngs.length - 1]);
     }
 
     // Functie om een SVG-icoontje als marker toe te voegen
@@ -124,20 +150,26 @@ class AxisEditor {
             return;
         }
     
-        // Laad de IIIF laag direct met de URL
         const iiifLayer = L.tileLayer.iiif(url, {
             quality: 'default',
             fitBounds: true
         }).addTo(this.map);
     
-        // Optioneel: Pas de kaartweergave aan wanneer de laag is geladen
         iiifLayer.on('load', () => {
-            const imageSize = iiifLayer.x.options.sizes[0];
-            const imageBounds = L.latLngBounds([
-                [0, 0],
-                [imageSize.height, imageSize.width]
-            ]);
-            this.map.fitBounds(imageBounds);
+            if (iiifLayer.x && iiifLayer.x.options) {
+                const imageSize = iiifLayer.x.options.sizes ? iiifLayer.x.options.sizes[0] : iiifLayer.x.options;
+                if (imageSize && imageSize.width && imageSize.height) {
+                    const imageBounds = L.latLngBounds([
+                        [0, 0],
+                        [imageSize.height, imageSize.width]
+                    ]);
+                    this.map.fitBounds(imageBounds);
+                } else {
+                    console.warn('⚠️ Unable to determine image bounds');
+                }
+            } else {
+                console.warn('⚠️ IIIF layer structure is unexpected');
+            }
             console.log("✅ IIIF-afbeelding geladen!");
         });
     }
@@ -158,8 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const editor = new AxisEditor(map);
 
         // Event listeners voor knoppen
-        document.getElementById("draw-x-axis").addEventListener("click", () => editor.startDrawingAxis("x", "blue"));
-        document.getElementById("draw-x2-axis").addEventListener("click", () => editor.startDrawingAxis("x2", "orange"));
-        document.getElementById("draw-y-axis").addEventListener("click", () => editor.startDrawingAxis("y", "red"));
+        document.getElementById("draw-x-axis").addEventListener("click", () => editor.startDrawingAxis("x-axis"));
+        document.getElementById("draw-x2-axis").addEventListener("click", () => editor.startDrawingAxis("x-axis-2"));
+        document.getElementById("draw-y-axis").addEventListener("click", () => editor.startDrawingAxis("y-axis"));
         document.getElementById("generate-grid").addEventListener("click", () => editor.generateGrid());
 });
