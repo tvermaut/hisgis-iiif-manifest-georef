@@ -1,3 +1,32 @@
+// Wacht tot de DOM geladen is voordat we de editor starten
+document.addEventListener('DOMContentLoaded', () => {
+    const map = L.map('map', {
+        center: [0, 0],
+        zoom: 1,
+        crs: L.CRS.Simple, // Gebruik een eigen orthogonaal stelsel
+        minZoom: -2, // Minimaal zoomniveau
+        maxZoom: 10, // Maximaal zoomniveau
+    });
+
+    const pencilIcon = L.divIcon({
+        html: '<span style="font-size: 24px;">✎</span>',
+        className: 'pencil-icon'
+    });
+    
+    const gridIcon = L.divIcon({
+        html: '<span style="font-size: 24px;">▦</span>',
+        className: 'grid-icon'
+    });
+
+    // Start de AxisEditor
+    const editor = new AxisEditor(map);
+    // Event listeners voor knoppen
+    document.getElementById("draw-x-axis").addEventListener("click", () => editor.startDrawingAxis("x-axis"));
+    document.getElementById("draw-x2-axis").addEventListener("click", () => editor.startDrawingAxis("x-axis-2"));
+    document.getElementById("draw-y-axis").addEventListener("click", () => editor.startDrawingAxis("y-axis"));
+    document.getElementById("generate-grid").addEventListener("click", () => editor.generateGrid());
+    });
+
 // Klasse voor de axis-editor
 class AxisEditor {
     constructor(map) {
@@ -11,6 +40,12 @@ class AxisEditor {
             'x-axis-2': 'orange'
         };
         this.init();
+    }
+    
+    normalizeAngle(angle) {
+        while (angle > 45) angle -= 90;
+        while (angle <= -45) angle += 90;
+        return angle;
     }
 
     init() {
@@ -207,7 +242,8 @@ class AxisEditor {
         const scale = 1 / (inchesPerMeter * 39.3701); // 1 inch = 2.54 cm, 1 m = 100 cm
         const roundedScale = Math.round(scale / 50) * 50; // Rond af naar dichtstbijzijnde 50
 
-        console.log(`Berekende kaartschaal: 1:${roundedScale}`);
+        // Toon de kaartschaal in het paneel
+        document.getElementById('map-scale').textContent = `1:${roundedScale}`;
 
         // Bereken rotatiehoek (vereenvoudigd, zonder regressie)
         const xAngle = this.calculateAngle(xAxis.polyline.getLatLngs());
@@ -217,9 +253,9 @@ class AxisEditor {
         const optimalAngle = (xAngle + x2Angle) / 2;
 
         // Toon afwijkingen
-        document.getElementById('x-axis-deviation').textContent = `(${(xAngle - optimalAngle).toFixed(2)}°)`;
-        document.getElementById('y-axis-deviation').textContent = `(${(yAngle - optimalAngle - 90).toFixed(2)}°)`;
-        document.getElementById('x2-axis-deviation').textContent = `(${(x2Angle - optimalAngle).toFixed(2)}°)`;
+        document.getElementById('x-axis-deviation').textContent = `(${this.normalizeAngle(xAngle - optimalAngle).toFixed(2)}°)`;
+        document.getElementById('y-axis-deviation').textContent = `(${this.normalizeAngle(yAngle - optimalAngle - 90).toFixed(2)}°)`;
+        document.getElementById('x2-axis-deviation').textContent = `(${this.normalizeAngle(x2Angle - optimalAngle).toFixed(2)}°)`;
 
         // Bepaal gridafstand
         let gridDistance;
@@ -259,40 +295,22 @@ class AxisEditor {
         const diagonalPixels = Math.sqrt(Math.pow(this.map.getSize().x, 2) + Math.pow(this.map.getSize().y, 2));
         const gridLines = Math.ceil(diagonalPixels / gridPixels) * 2;
     
+        const correctedAngle = angle - 45;  // <--- DEZE REGEL TOEVOEGEN
+    
         for (let i = -gridLines; i <= gridLines; i++) {
             // Verticale lijnen
-            const startPoint = this.rotatePoint(L.point(-diagonalPixels, i * gridPixels), angle, centerPoint);
-            const endPoint = this.rotatePoint(L.point(diagonalPixels, i * gridPixels), angle, centerPoint);
+            const startPoint = this.rotatePoint(L.point(-diagonalPixels, i * gridPixels), correctedAngle, centerPoint); // Gebruik correctedAngle
+            const endPoint = this.rotatePoint(L.point(diagonalPixels, i * gridPixels), correctedAngle, centerPoint);   // Gebruik correctedAngle
             const start = this.map.layerPointToLatLng(startPoint);
             const end = this.map.layerPointToLatLng(endPoint);
             L.polyline([start, end], {color: 'rgba(255, 0, 0, 0.5)', weight: 1}).addTo(gridLayer);
     
             // Horizontale lijnen
-            const hStartPoint = this.rotatePoint(L.point(i * gridPixels, -diagonalPixels), angle, centerPoint);
-            const hEndPoint = this.rotatePoint(L.point(i * gridPixels, diagonalPixels), angle, centerPoint);
+            const hStartPoint = this.rotatePoint(L.point(i * gridPixels, -diagonalPixels), correctedAngle, centerPoint); // Gebruik correctedAngle
+            const hEndPoint = this.rotatePoint(L.point(i * gridPixels, diagonalPixels), correctedAngle, centerPoint);   // Gebruik correctedAngle
             const hStart = this.map.layerPointToLatLng(hStartPoint);
             const hEnd = this.map.layerPointToLatLng(hEndPoint);
             L.polyline([hStart, hEnd], {color: 'rgba(255, 0, 0, 0.5)', weight: 1}).addTo(gridLayer);
         }
     }
-
 }
-
-// Wacht tot de DOM geladen is voordat we de editor starten
-document.addEventListener('DOMContentLoaded', () => {
-    const map = L.map('map', {
-        center: [0, 0],
-        zoom: 1,
-        crs: L.CRS.Simple, // Gebruik een eigen orthogonaal stelsel
-        minZoom: -2, // Minimaal zoomniveau
-        maxZoom: 10, // Maximaal zoomniveau
-    });
-
-    // Start de AxisEditor
-    const editor = new AxisEditor(map);
-    // Event listeners voor knoppen
-    document.getElementById("draw-x-axis").addEventListener("click", () => editor.startDrawingAxis("x-axis"));
-    document.getElementById("draw-x2-axis").addEventListener("click", () => editor.startDrawingAxis("x-axis-2"));
-    document.getElementById("draw-y-axis").addEventListener("click", () => editor.startDrawingAxis("y-axis"));
-    document.getElementById("generate-grid").addEventListener("click", () => editor.generateGrid());
-    });

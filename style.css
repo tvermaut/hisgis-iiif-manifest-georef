@@ -132,4 +132,6 @@ button:hover {
     margin-right: 5px;
     vertical-align: middle;
   }
-  
+.icon-button {
+font-size: 24px;
+}
