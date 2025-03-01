@@ -135,3 +135,12 @@ button:hover {
 .icon-button {
 font-size: 24px;
 }
+
+.inline-controls {
+    display: flex;
+    align-items: center;
+}
+
+.inline-controls button {
+    margin-left: 10px;
+}

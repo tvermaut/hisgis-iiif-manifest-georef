@@ -40,6 +40,8 @@ class AxisEditor {
             'x-axis-2': 'orange'
         };
         this.init();
+        this.isLoadingInfoJson = false;
+
     }
     
     normalizeAngle(angle) {
@@ -179,6 +181,10 @@ class AxisEditor {
 
     // Functie voor het laden van de IIIF-afbeelding
     loadIIIFLayer(url) {
+        if (this.isLoadingInfoJson) return; // Voorkom dubbele verzoeken
+
+        this.isLoadingInfoJson = true;
+
         console.log(`🔄 Laden van IIIF-afbeelding van: ${url}`);
         if (!url) {
             console.error('❌ Geen URL opgegeven');
@@ -194,6 +200,7 @@ class AxisEditor {
         fetch(url)
             .then(response => response.json())
             .then(info => {
+                this.isLoadingInfoJson = false;
                 const width = info.width;
                 const height = info.height;
     
@@ -287,40 +294,46 @@ class AxisEditor {
 
     drawGrid(gridDistance, pixelsPerMeter, optimalAngle) {
         const gridLayer = L.layerGroup().addTo(this.map);
-        const bounds = this.map.getBounds();
+    
+        // Bereken de grenzen van de afbeelding (niet afhankelijk van viewport)
+        const bounds = this.imageBounds; // Zorg dat je imageBounds opslaat bij het laden van de afbeelding
         const northWest = bounds.getNorthWest();
         const southEast = bounds.getSouthEast();
         const startPoint = this.map.latLngToLayerPoint(northWest);
         const endPoint = this.map.latLngToLayerPoint(southEast);
-
-        const rotatedStart = this.rotatePoint(startPoint, -optimalAngle, startPoint);
-        const rotatedEnd = this.rotatePoint(endPoint, -optimalAngle, startPoint);
-
+    
+        // Pas rotatie toe
+        const correctedAngle = optimalAngle;
+        const rotatedStart = this.rotatePoint(startPoint, -correctedAngle, startPoint);
+        const rotatedEnd = this.rotatePoint(endPoint, -correctedAngle, startPoint);
+    
+        // Bereken gridlijnen
         let startX = rotatedStart.x;
         let startY = rotatedStart.y;
         let endX = rotatedEnd.x;
         let endY = rotatedEnd.y;
-
+    
         let firstX = Math.floor(startX / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
         let firstY = Math.floor(startY / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
-
+    
         // Teken verticale lijnen
         for (let x = firstX; x <= endX; x += gridDistance * pixelsPerMeter) {
-            const point1 = this.rotatePoint(L.point(x, startY), optimalAngle, startPoint);
-            const point2 = this.rotatePoint(L.point(x, endY), optimalAngle, startPoint);
+            const point1 = this.rotatePoint(L.point(x, startY), correctedAngle, startPoint);
+            const point2 = this.rotatePoint(L.point(x, endY), correctedAngle, startPoint);
             const latlng1 = this.map.layerPointToLatLng(point1);
             const latlng2 = this.map.layerPointToLatLng(point2);
             L.polyline([latlng1, latlng2], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
         }
-
+    
         // Teken horizontale lijnen
         for (let y = firstY; y <= endY; y += gridDistance * pixelsPerMeter) {
-            const point1 = this.rotatePoint(L.point(startX, y), optimalAngle, startPoint);
-            const point2 = this.rotatePoint(L.point(endX, y), optimalAngle, startPoint);
+            const point1 = this.rotatePoint(L.point(startX, y), correctedAngle, startPoint);
+            const point2 = this.rotatePoint(L.point(endX, y), correctedAngle, startPoint);
             const latlng1 = this.map.layerPointToLatLng(point1);
             const latlng2 = this.map.layerPointToLatLng(point2);
             L.polyline([latlng1, latlng2], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
         }
     }
+    
     
 }
