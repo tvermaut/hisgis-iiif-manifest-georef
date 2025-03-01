@@ -125,3 +125,11 @@ button:hover {
     font-weight: bold;
     color: #333;
 }
+
+.button-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+  

@@ -180,6 +180,85 @@ class AxisEditor {
             });
     }
     
+    generateGrid() {
+        if (!this.axes['x-axis'] || !this.axes['y-axis'] || !this.axes['x-axis-2']) {
+            console.error('Alle drie de assen moeten getekend zijn voordat het grid kan worden gegenereerd.');
+            return;
+        }
+
+        const xAxis = this.axes['x-axis'];
+        const yAxis = this.axes['y-axis'];
+        const x2Axis = this.axes['x-axis-2'];
+
+        // Bereken pixels per meter
+        const xAxisStart = xAxis.polyline.getLatLngs()[0];
+        const x2AxisStart = x2Axis.polyline.getLatLngs()[0];
+        const pixelDistance = this.map.latLngToLayerPoint(x2AxisStart).distanceTo(this.map.latLngToLayerPoint(xAxisStart));
+        
+        // Haal ingevoerde waarden op (deze moeten ergens in de UI worden ingevoerd)
+        const xAxisValue = parseFloat(document.getElementById('x-axis-value').value);
+        const x2AxisValue = parseFloat(document.getElementById('x2-axis-value').value);
+        const meterDistance = Math.abs(x2AxisValue - xAxisValue);
+
+        const pixelsPerMeter = pixelDistance / meterDistance;
+
+        // Bereken kaartschaal
+        const inchesPerMeter = pixelsPerMeter / 300; // 300 DPI
+        const scale = 1 / (inchesPerMeter * 39.3701); // 1 inch = 2.54 cm, 1 m = 100 cm
+        const roundedScale = Math.round(scale / 50) * 50; // Rond af naar dichtstbijzijnde 50
+
+        console.log(`Berekende kaartschaal: 1:${roundedScale}`);
+
+        // Bereken rotatiehoek (vereenvoudigd, zonder regressie)
+        const xAngle = this.calculateAngle(xAxis.polyline.getLatLngs());
+        const yAngle = this.calculateAngle(yAxis.polyline.getLatLngs());
+        const x2Angle = this.calculateAngle(x2Axis.polyline.getLatLngs());
+
+        const optimalAngle = (xAngle + x2Angle) / 2;
+
+        // Toon afwijkingen
+        document.getElementById('x-axis-deviation').textContent = `(${(xAngle - optimalAngle).toFixed(2)}°)`;
+        document.getElementById('y-axis-deviation').textContent = `(${(yAngle - optimalAngle - 90).toFixed(2)}°)`;
+        document.getElementById('x2-axis-deviation').textContent = `(${(x2Angle - optimalAngle).toFixed(2)}°)`;
+
+        // Bepaal gridafstand
+        let gridDistance;
+        if (roundedScale <= 1250) gridDistance = 125;
+        else if (roundedScale <= 2500) gridDistance = 250;
+        else gridDistance = 500;
+
+        // Teken grid
+        this.drawGrid(gridDistance, pixelsPerMeter, optimalAngle);
+    }
+
+    calculateAngle(points) {
+        const dx = points[1].lng - points[0].lng;
+        const dy = points[1].lat - points[0].lat;
+        return Math.atan2(dy, dx) * 180 / Math.PI;
+    }
+
+    drawGrid(gridDistance, pixelsPerMeter, angle) {
+        const gridLayer = L.layerGroup().addTo(this.map);
+        const bounds = this.map.getBounds();
+        const center = bounds.getCenter();
+
+        const gridPixels = gridDistance * pixelsPerMeter;
+        const diagonalPixels = Math.sqrt(Math.pow(this.map.getSize().x, 2) + Math.pow(this.map.getSize().y, 2));
+        const gridLines = Math.ceil(diagonalPixels / gridPixels) * 2;
+
+        for (let i = -gridLines; i <= gridLines; i++) {
+            // Verticale lijnen
+            const start = this.map.layerPointToLatLng(L.point(-diagonalPixels, i * gridPixels).rotate(angle, [0, 0]));
+            const end = this.map.layerPointToLatLng(L.point(diagonalPixels, i * gridPixels).rotate(angle, [0, 0]));
+            L.polyline([start, end], {color: 'rgba(255, 0, 0, 0.5)', weight: 1}).addTo(gridLayer);
+
+            // Horizontale lijnen
+            const hStart = this.map.layerPointToLatLng(L.point(i * gridPixels, -diagonalPixels).rotate(angle, [0, 0]));
+            const hEnd = this.map.layerPointToLatLng(L.point(i * gridPixels, diagonalPixels).rotate(angle, [0, 0]));
+            L.polyline([hStart, hEnd], {color: 'rgba(255, 0, 0, 0.5)', weight: 1}).addTo(gridLayer);
+        }
+    }
+
 }
 
 // Wacht tot de DOM geladen is voordat we de editor starten
