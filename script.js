@@ -5,6 +5,8 @@ class AxisEditor {
         this.axes = {};
         this.currentAxisId = null;
         this.currentDrawing = false;
+        this.startMarker = null;
+        this.endMarker = null;
         this.init();
     }
 
@@ -80,23 +82,25 @@ class AxisEditor {
     removeMarkers(axisId) {
         const polyline = this.axes[axisId];
         if (polyline) {
-            polyline.eachLayer((layer) => {
-                if (layer instanceof L.Marker) {
-                    this.map.removeLayer(layer);
-                }
-            });
+            this.map.removeLayer(polyline);
+            if (this.startMarker) this.map.removeLayer(this.startMarker);
+            if (this.endMarker) this.map.removeLayer(this.endMarker);
         }
     }
 
     // Voeg SVG-icoontjes als markers toe bij het begin en het einde van de lijn
     addMarkersToLine(line, color) {
         const latlngs = line.getLatLngs();
-
+    
+        // Verwijder bestaande markers
+        if (this.startMarker) this.map.removeLayer(this.startMarker);
+        if (this.endMarker) this.map.removeLayer(this.endMarker);
+    
         // Voeg marker aan het begin van de lijn toe
-        L.marker(latlngs[0], { icon: this.createSvgIcon(color) }).addTo(this.map);
-
+        this.startMarker = L.marker(latlngs[0], { icon: this.createSvgIcon(color) }).addTo(this.map);
+    
         // Voeg marker aan het einde van de lijn toe
-        L.marker(latlngs[latlngs.length - 1], { icon: this.createSvgIcon(color) }).addTo(this.map);
+        this.endMarker = L.marker(latlngs[latlngs.length - 1], { icon: this.createSvgIcon(color) }).addTo(this.map);
     }
 
     // Functie om een SVG-icoontje als marker toe te voegen
@@ -128,7 +132,11 @@ class AxisEditor {
     
         // Optioneel: Pas de kaartweergave aan wanneer de laag is geladen
         iiifLayer.on('load', () => {
-            const imageBounds = iiifLayer.getBounds();
+            const imageSize = iiifLayer.x.options.sizes[0];
+            const imageBounds = L.latLngBounds([
+                [0, 0],
+                [imageSize.height, imageSize.width]
+            ]);
             this.map.fitBounds(imageBounds);
             console.log("✅ IIIF-afbeelding geladen!");
         });
