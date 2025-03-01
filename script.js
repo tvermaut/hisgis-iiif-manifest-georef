@@ -151,7 +151,7 @@ class AxisEditor {
         }
     
         // Maak een nieuwe IIIF-laag
-        L.tileLayer.iiif('http://example.com/iiifimage.jp2/info.json', {
+        L.tileLayer.iiif(url, {
             fitBounds: true
           }).addTo(map).on('tileerror', function(error, tile) {
             console.log('Tegel laad fout:', error, tile);
