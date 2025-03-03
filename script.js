@@ -82,7 +82,11 @@ class Editor {
         if (!this.currentDrawing) return;
     
         // Verkrijg containerpunt (pixel binnen de viewport)
-        const containerPoint = event.containerPoint;
+        const containerPoint = convertCoordinates(event.containerPoint);
+        console.log('Klik event:', event.containerPoint);
+        console.log('Geconverteerd punt:', convertCoordinates(event.containerPoint));
+        console.log('Huidige map bounds:', this.map.getBounds());
+
     
         // Converteer containerpunt naar LatLng-coördinaten binnen het afbeeldingsgebied
         const latlng = this.map.unproject(containerPoint);
@@ -163,7 +167,17 @@ class Editor {
                     console.log(`northEast:`, northEast);
     
                     console.log(`🔧 Aanmaken van IIIF tileLayer...`);
-                    const iiifLayer = L.tileLayer.iiif(infoJsonUrl);
+                    const iiifLayer = L.tileLayer.iiif(infoJsonUrl, {
+                        attribution: 'IIIF',
+                        tileSize: 256,
+                        minZoom: 0,
+                        //maxZoom: this.map.getMaxZoom(),
+                        reuseTiles: true,
+                        continuousWorld: true,
+                        noWrap: true,
+                        crs: L.CRS.Simple,
+                        zIndex: 100
+                    });
     
                     console.log(`➕ IIIF tileLayer aangemaakt, toevoegen aan map...`);
                     iiifLayer.addTo(this.map);
