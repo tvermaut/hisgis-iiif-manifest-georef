@@ -136,6 +136,8 @@ class Editor {
         this.isLoadingInfoJson = true;
     
         console.log(`🔄 Start laden van IIIF-afbeelding info van: ${infoJsonUrl}`);
+        console.log(`Huidige map center:`, this.map.getCenter());
+        console.log(`Huidige map zoom:`, this.map.getZoom());
     
         fetch(infoJsonUrl)
             .then(response => {
@@ -152,8 +154,8 @@ class Editor {
     
                 if (width && height) {
                     // Bereken de imageBounds correct
-                    const southWest = this.map.unproject([0, height]);
-                    const northEast = this.map.unproject([width, 0]);
+                    const southWest = this.map.unproject([0, height], this.map.getMaxZoom());
+                    const northEast = this.map.unproject([width, 0], this.map.getMaxZoom());
                     this.imageBounds = L.latLngBounds(southWest, northEast);
     
                     console.log(`🗺️ Berekende imageBounds:`, this.imageBounds);
@@ -165,25 +167,38 @@ class Editor {
                         attribution: 'IIIF',
                         tileSize: 256,
                         minZoom: 0,
-                        maxZoom: 10,
+                        maxZoom: this.map.getMaxZoom(),
                         bounds: this.imageBounds,
                         reuseTiles: true,
                         continuousWorld: true,
                         noWrap: true,
                         crs: L.CRS.Simple,
-                        zIndex: 100 // Zorg ervoor dat de layer bovenop ligt
+                        zIndex: 100
                     });
     
                     console.log(`➕ IIIF tileLayer aangemaakt, toevoegen aan map...`);
                     iiifLayer.addTo(this.map);
     
-                     // Stel de map bounds in op basis van imageBounds
+                    console.log(`🔍 Aanpassen van map view...`);
                     this.map.fitBounds(this.imageBounds);
     
-                    console.log(`🔍 Aangepaste map view met fitBounds:`, this.imageBounds);
+                    console.log(`Na fitBounds - Nieuwe map center:`, this.map.getCenter());
+                    console.log(`Na fitBounds - Nieuwe map zoom:`, this.map.getZoom());
     
                     console.log(`📏 Updaten van grid imageBounds...`);
                     this.grid.imageBounds = this.imageBounds;
+    
+                    // Extra controle op zichtbaarheid van de layer
+                    iiifLayer.on('load', function() {
+                        console.log(`🖼️ IIIF layer geladen event ontvangen`);
+                    });
+    
+                    // Controleer of de layer daadwerkelijk is toegevoegd aan de map
+                    if (this.map.hasLayer(iiifLayer)) {
+                        console.log(`✅ IIIF layer is succesvol toegevoegd aan de map`);
+                    } else {
+                        console.warn(`⚠️ IIIF layer is niet toegevoegd aan de map`);
+                    }
     
                     console.log("✅ IIIF-afbeelding laadproces voltooid!");
                 } else {
@@ -194,7 +209,7 @@ class Editor {
                 console.error("❌ Fout bij het laden van info.json:", error);
                 this.isLoadingInfoJson = false;
             });
-    }      
+    }         
 }
 
 export default Editor;
