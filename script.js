@@ -151,11 +151,14 @@ class Editor {
                 console.log(`📐 Afbeeldingsafmetingen: ${width}x${height}`);
     
                 if (width && height) {
-                    this.imageBounds = L.latLngBounds(
-                        this.map.unproject([0, height]),
-                        this.map.unproject([width, 0])
-                    );
+                    // Bereken de imageBounds correct
+                    const southWest = this.map.unproject([0, height]);
+                    const northEast = this.map.unproject([width, 0]);
+                    this.imageBounds = L.latLngBounds(southWest, northEast);
+    
                     console.log(`🗺️ Berekende imageBounds:`, this.imageBounds);
+                    console.log(`southWest:`, southWest);
+                    console.log(`northEast:`, northEast);
     
                     console.log(`🔧 Aanmaken van IIIF tileLayer...`);
                     const iiifLayer = L.tileLayer.iiif(infoJsonUrl, {
@@ -167,14 +170,17 @@ class Editor {
                         reuseTiles: true,
                         continuousWorld: true,
                         noWrap: true,
-                        crs: L.CRS.Simple
+                        crs: L.CRS.Simple,
+                        zIndex: 100 // Zorg ervoor dat de layer bovenop ligt
                     });
     
                     console.log(`➕ IIIF tileLayer aangemaakt, toevoegen aan map...`);
                     iiifLayer.addTo(this.map);
     
-                    console.log(`🔍 Aanpassen van map view...`);
+                     // Stel de map bounds in op basis van imageBounds
                     this.map.fitBounds(this.imageBounds);
+    
+                    console.log(`🔍 Aangepaste map view met fitBounds:`, this.imageBounds);
     
                     console.log(`📏 Updaten van grid imageBounds...`);
                     this.grid.imageBounds = this.imageBounds;
