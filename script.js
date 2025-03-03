@@ -106,7 +106,7 @@ class Editor {
             this.axes[this.currentAxisId].polyline = L.polyline([cc(event.containerPoint, this.map)], { color: this.axes[this.currentAxisId].color }).addTo(this.map);
         } else {
             // Tweede punt van de lijn
-            this.axes[this.currentAxisId].polyline.addLatLng(LatLng(event.containerPoint.x, event.containerPoint.y));
+            this.axes[this.currentAxisId].polyline.addLatLng(L.LatLng(event.containerPoint.x, event.containerPoint.y));
             this.addOrUpdateAxis(this.currentAxisId, this.axes[this.currentAxisId].polyline.getLatLngs());
             this.currentDrawing = false;
             this.map.getContainer().style.cursor = ''; // Reset cursor
