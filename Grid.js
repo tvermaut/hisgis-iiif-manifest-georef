@@ -48,8 +48,8 @@ class Grid {
             console.error('Image bounds zijn niet ingesteld. Laad eerst een afbeelding.');
             return;
         }
-        const centerX = (this.imageBounds.min.x + this.imageBounds.max.x) / 2;
-        const centerY = (this.imageBounds.min.y + this.imageBounds.max.y) / 2;
+        const centerX = (this.imageBounds[0][0] + this.imageBounds[1][0]) / 2;
+        const centerY = (this.imageBounds[0][1] + this.imageBounds[1][1]) / 2;
 
         const angleRad = (this.optimalAngle * Math.PI) / 180;
         this.distance.berekend = (this.imageBounds.max.x - this.imageBounds.min.x) / (this.axes.x2.value - this.axes.x.value) * this.distance.theoretic;
