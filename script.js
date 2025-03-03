@@ -96,7 +96,7 @@ class Editor {
         // Converteer containerpunt naar LatLng-coördinaten binnen het afbeeldingsgebied
         // const latlng = this.map.unproject(containerPoint);
     
-        console.log(`🖱️ Klik geregistreerd op pixel: (${event.containerPoint.x}, ${event.containerPoint.y}), LatLng: ${latlng}`);
+        // console.log(`🖱️ Klik geregistreerd op pixel: (${event.containerPoint.x}, ${event.containerPoint.y}), LatLng: ${latlng}`);
     
         // Controleer of dit het eerste of tweede punt van de lijn is
         if (!this.axes[this.currentAxisId].polyline) {
