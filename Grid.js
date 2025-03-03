@@ -67,19 +67,21 @@ class Grid {
         const startX = centerX - Math.floor((this.imageBounds._northEast.lat) / (2 * this.distance.berekend)) * this.distance.berekend;
         const startY = centerY - Math.floor((this.imageBounds._northEast.lng) / (2 * this.distance.berekend)) * this.distance.berekend;
 
-        // Teken verticale lijnen
-        for (let x = startX; x <= this.imageBounds._northEast.lat; x += this.distance.berekend) {
-            const start = rotatePoint(x, 0);
-            const end = rotatePoint(x, this.imageBounds._northEast.lng);
-            L.polyline([[start.y, start.x], [end.y, end.x]], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
-        }
+        console.log("beginnen met tekenen...")
 
-        // Teken horizontale lijnen
-        for (let y = startY; y <= this.imageBounds._northEast.lng; y += this.distance.berekend) {
-            const start = rotatePoint(0, y);
-            const end = rotatePoint(this.imageBounds._northEast.lat, y);
-            L.polyline([[start.y, start.x], [end.y, end.x]], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
-        }
+        // // Teken verticale lijnen
+        // for (let x = startX; x <= this.imageBounds._northEast.lat; x += this.distance.berekend) {
+        //     const start = rotatePoint(x, 0);
+        //     const end = rotatePoint(x, this.imageBounds._northEast.lng);
+        //     L.polyline([[start.y, start.x], [end.y, end.x]], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
+        // }
+
+        // // Teken horizontale lijnen
+        // for (let y = startY; y <= this.imageBounds._northEast.lng; y += this.distance.berekend) {
+        //     const start = rotatePoint(0, y);
+        //     const end = rotatePoint(this.imageBounds._northEast.lat, y);
+        //     L.polyline([[start.y, start.x], [end.y, end.x]], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
+        // }
     }
 }
 
