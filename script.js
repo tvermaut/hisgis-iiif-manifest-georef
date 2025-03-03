@@ -153,35 +153,28 @@ class Editor {
                         throw new Error("IIIF base URL niet gevonden in info.json");
                     }
     
-                    // Maak een aangepaste tile layer met de juiste URL-format
-                    const iiifLayer = L.tileLayer(`${iiifBaseUrl}/{region}/{size}/{rotation}/{quality}.{format}`, {
-                        size: 256,
+                    // Maak een tile layer met de juiste URL-format
+                    const iiifLayer = L.tileLayer(`${iiifBaseUrl}/{z}/{x}/{y}.jpg`, {
+                        attribution: 'IIIF',
                         tileSize: 256,
                         minZoom: 0,
-                        maxZoom: 10,
-                        region: 'full',
-                        rotation: '0',
-                        quality: 'default',
-                        format: 'jpg',
+                        maxZoom: this.map.getMaxZoom(),
                         bounds: this.imageBounds,
                         reuseTiles: true,
-                        getTileUrl: function(coords) {
-                            const zoom = this._getZoomForUrl();
-                            const tilesize = this.options.tileSize;
+                        continuousWorld: true,
+                        noWrap: true,
+                        crs: L.CRS.Simple,
     
+                        // Functie om de URL voor de tile te genereren
+                        getTileUrl: function (coords) {
+                            const zoom = coords.z;
                             const x = coords.x;
                             const y = coords.y;
     
-                            const region = `${x * tilesize},${y * tilesize},${tilesize},${tilesize}`;
-                            const size = `${tilesize},`;
+                            // Correcte IIIF URL
+                            const iiifTileUrl = `${iiifBaseUrl}/${x},${y},${width},${height}/${zoom}/0/default.jpg`;
     
-                            return L.Util.template(this._url, {
-                                region: region,
-                                size: size,
-                                rotation: this.options.rotation,
-                                quality: this.options.quality,
-                                format: this.options.format
-                            });
+                            return iiifTileUrl;
                         }
                     }).addTo(this.map);
     
@@ -198,6 +191,7 @@ class Editor {
                 this.isLoadingInfoJson = false;
             });
     }
+    
         
 }
 
