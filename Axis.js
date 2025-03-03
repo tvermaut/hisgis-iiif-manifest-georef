@@ -34,6 +34,7 @@ class Axis {
             return marker;
         };
     
+        // Maak of update markers voor het begin- en eindpunt van de lijn
         this.startMarker = createOrUpdateMarker(this.startMarker, latlngs[0]);
         this.endMarker = createOrUpdateMarker(this.endMarker, latlngs[latlngs.length - 1]);
     }       

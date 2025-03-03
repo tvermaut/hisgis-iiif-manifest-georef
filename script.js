@@ -81,28 +81,37 @@ class Editor {
     handleMapClick(event) {
         if (!this.currentDrawing) return;
     
-        const containerPoint = event.containerPoint; // Pixelcoördinaten
-        const latlng = this.map.unproject(containerPoint); // Converteer naar LatLng
+        // Verkrijg containerpunt (pixel binnen de viewport)
+        const containerPoint = event.containerPoint;
+    
+        // Converteer containerpunt naar LatLng-coördinaten binnen het afbeeldingsgebied
+        const latlng = this.map.unproject(containerPoint);
     
         console.log(`🖱️ Klik geregistreerd op pixel: (${containerPoint.x}, ${containerPoint.y}), LatLng: ${latlng}`);
     
+        // Controleer of dit het eerste of tweede punt van de lijn is
         if (!this.axes[this.currentAxisId].polyline) {
-            // Eerste punt van de as
+            // Eerste punt van de lijn
             this.axes[this.currentAxisId].polyline = L.polyline([latlng], { color: this.axes[this.currentAxisId].color }).addTo(this.map);
         } else {
-            // Tweede punt van de as
+            // Tweede punt van de lijn
             this.axes[this.currentAxisId].polyline.addLatLng(latlng);
             this.addOrUpdateAxis(this.currentAxisId, this.axes[this.currentAxisId].polyline.getLatLngs());
             this.currentDrawing = false;
-            this.map.getContainer().style.cursor = '';
+            this.map.getContainer().style.cursor = ''; // Reset cursor
         }
-    }
+    }    
  
     addOrUpdateAxis(axisId, latlngs) {
+        // Update polyline met LatLng-coördinaten
         this.axes[axisId].polyline.setLatLngs(latlngs);
+    
+        // Voeg markers toe aan het begin en einde van de lijn
         this.axes[axisId].addMarkersToLine(this.map);
+    
+        // Update imageBounds voor gridberekeningen
         this.grid.imageBounds = this.imageBounds;
-    }
+    }    
 
     generateGrid() {
         this.leesWaarden();
@@ -120,41 +129,28 @@ class Editor {
     }
 
     loadIIIFLayer(url) {
-        if (this.isLoadingInfoJson) return;
-
-        this.isLoadingInfoJson = true;
-
-        console.log(`🔄 Laden van IIIF-afbeelding van: ${url}`);
-        if (!url) {
-            console.error('❌ Geen URL opgegeven');
-            return;
-        }
-    
-        const iiifLayer = new L.TileLayer.Iiif(url).addTo(this.map);
-    
         fetch(url)
             .then(response => response.json())
             .then(info => {
-                this.isLoadingInfoJson = false;
                 const width = info.width;
                 const height = info.height;
     
                 if (width && height) {
-                    this.imageBounds = L.latLngBounds([
-                        [0, 0],
-                        [height, width]
-                    ]);
+                    // Stel bounds in op basis van breedte en hoogte
+                    this.imageBounds = L.latLngBounds(
+                        this.map.unproject([0, height]), // Linksonder
+                        this.map.unproject([width, 0])  // Rechtsboven
+                    );
+    
+                    L.imageOverlay(url, this.imageBounds).addTo(this.map);
                     this.map.fitBounds(this.imageBounds);
-                    this.grid.imageBounds = this.imageBounds;
+    
                     console.log("✅ IIIF-afbeelding geladen!");
                 } else {
                     console.warn("⚠️ Breedte of hoogte ontbreekt in info.json");
                 }
             })
-            .catch(error => {
-                console.error("❌ Fout bij het laden van info.json:", error);
-                this.isLoadingInfoJson = false;
-            });
+            .catch(error => console.error("❌ Fout bij het laden van info.json:", error));
     }
 }
 
