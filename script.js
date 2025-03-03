@@ -133,7 +133,7 @@ class Editor {
         this.isLoadingInfoJson = true;
     
         console.log(`🔄 Laden van IIIF-afbeelding info van: ${infoJsonUrl}`);
-        
+    
         fetch(infoJsonUrl)
             .then(response => response.json())
             .then(info => {
@@ -142,20 +142,48 @@ class Editor {
                 const height = info.height;
     
                 if (width && height) {
-                    // Stel bounds in op basis van breedte en hoogte
                     this.imageBounds = L.latLngBounds(
-                        this.map.unproject([0, height]), // Linksonder
-                        this.map.unproject([width, 0])   // Rechtsboven
+                        this.map.unproject([0, height]),
+                        this.map.unproject([width, 0])
                     );
     
-                    // Gebruik de IIIF tileserver URL voor de afbeelding
-                    const iiifTileUrl = info['@id'] || info.id;
-                    if (!iiifTileUrl) {
-                        throw new Error("IIIF tileserver URL niet gevonden in info.json");
+                    // Haal de IIIF base URL op uit info.json
+                    const iiifBaseUrl = info['@id'] || info.id;
+                    if (!iiifBaseUrl) {
+                        throw new Error("IIIF base URL niet gevonden in info.json");
                     }
     
-                    // Maak een nieuwe IIIF-laag aan
-                    const iiifLayer = L.tileLayer.iiif(iiifTileUrl).addTo(this.map);
+                    // Maak een aangepaste tile layer met de juiste URL-format
+                    const iiifLayer = L.tileLayer(`${iiifBaseUrl}/{region}/{size}/{rotation}/{quality}.{format}`, {
+                        attribution: 'IIIF',
+                        tileSize: 256,
+                        minZoom: 0,
+                        maxZoom: 10,
+                        region: 'full',
+                        rotation: '0',
+                        quality: 'default',
+                        format: 'jpg',
+                        bounds: this.imageBounds,
+                        reuseTiles: true,
+                        getTileUrl: function(coords) {
+                            const zoom = this._getZoomForUrl();
+                            const tilesize = this.options.tileSize;
+    
+                            const x = coords.x;
+                            const y = coords.y;
+    
+                            const region = `${x * tilesize},${y * tilesize},${tilesize},${tilesize}`;
+                            const size = `${tilesize},`;
+    
+                            return L.Util.template(this._url, {
+                                region: region,
+                                size: size,
+                                rotation: this.options.rotation,
+                                quality: this.options.quality,
+                                format: this.options.format
+                            });
+                        }
+                    }).addTo(this.map);
     
                     this.map.fitBounds(this.imageBounds);
                     this.grid.imageBounds = this.imageBounds;
@@ -169,7 +197,8 @@ class Editor {
                 console.error("❌ Fout bij het laden van info.json:", error);
                 this.isLoadingInfoJson = false;
             });
-    }    
+    }
+        
 }
 
 export default Editor;
