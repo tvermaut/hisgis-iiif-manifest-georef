@@ -47,7 +47,7 @@ class Grid {
         if (!this.imageBounds) {
             console.error('Image bounds zijn niet ingesteld. Laad eerst een afbeelding.');
             return;
-        }
+        } else {console.log("imageBounds: "); console.log(this.imageBounds);}
         const centerX = (this.imageBounds[0][0] + this.imageBounds[1][0]) / 2;
         const centerY = (this.imageBounds[0][1] + this.imageBounds[1][1]) / 2;
 
