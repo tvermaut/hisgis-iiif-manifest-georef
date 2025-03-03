@@ -85,33 +85,24 @@ class Editor {
     }
 
     handleMapClick(event) {
+        // Gebruik containerPoint in plaats van latlng
+        const containerPoint = event.containerPoint;
+        const latlng = this.map.containerPointToLatLng(containerPoint);
+    
+        console.log('Klik op containerPoint:', containerPoint);
+        console.log('Omgezet naar LatLng:', latlng);
+    
         if (!this.currentDrawing) return;
     
-        // Verkrijg containerpunt (pixel binnen de viewport)
-        console.log('event.containerPoint:', event.containerPoint);
-        // console.log('Geconverteerd punt:', convertCoordinates(event.containerPoint, this.map));
-        // console.log('Huidige map bounds:', this.map.getBounds());
-
-        console.log('This: ', this);
-        console.log('Event: ', event);
-
-        // Converteer containerpunt naar LatLng-coördinaten binnen het afbeeldingsgebied
-        // const latlng = this.map.unproject(containerPoint);
-    
-        // console.log(`🖱️ Klik geregistreerd op pixel: (${event.containerPoint.x}, ${event.containerPoint.y}), LatLng: ${latlng}`);
-    
-        // Controleer of dit het eerste of tweede punt van de lijn is
         if (!this.axes[this.currentAxisId].polyline) {
-            // Eerste punt van de lijn
-            this.axes[this.currentAxisId].polyline = L.polyline([cc(event.containerPoint, this.map)], { color: this.axes[this.currentAxisId].color }).addTo(this.map);
+            this.axes[this.currentAxisId].polyline = L.polyline([latlng], { color: this.axes[this.currentAxisId].color }).addTo(this.map);
         } else {
-            // Tweede punt van de lijn
-            this.axes[this.currentAxisId].polyline.addLatLng(L.latLng(event.containerPoint.x, event.containerPoint.y));
+            this.axes[this.currentAxisId].polyline.addLatLng(latlng);
             this.addOrUpdateAxis(this.currentAxisId, this.axes[this.currentAxisId].polyline.getLatLngs());
             this.currentDrawing = false;
-            this.map.getContainer().style.cursor = ''; // Reset cursor
+            this.map.getContainer().style.cursor = '';
         }
-    }    
+    }
  
     addOrUpdateAxis(axisId, latlngs) {
         // Update polyline met LatLng-coördinaten
@@ -172,6 +163,9 @@ class Editor {
                     console.log(`🗺️ Berekende imageBounds:`, this.imageBounds);
                     console.log(`southWest:`, southWest);
                     console.log(`northEast:`, northEast);
+
+                    console.log('Map bounds:', this.map.getBounds());
+                    console.log('Image bounds:', this.imageBounds);
     
                     console.log(`🔧 Aanmaken van IIIF tileLayer...`);
                     const iiifLayer = L.tileLayer.iiif(infoJsonUrl, {
