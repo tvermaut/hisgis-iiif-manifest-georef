@@ -129,24 +129,35 @@ class Editor {
     }
 
     loadIIIFLayer(infoJsonUrl) {
-        if (this.isLoadingInfoJson) return;
+        if (this.isLoadingInfoJson) {
+            console.log("❗ Al bezig met laden van een IIIF laag");
+            return;
+        }
         this.isLoadingInfoJson = true;
     
-        console.log(`🔄 Laden van IIIF-afbeelding info van: ${infoJsonUrl}`);
+        console.log(`🔄 Start laden van IIIF-afbeelding info van: ${infoJsonUrl}`);
     
         fetch(infoJsonUrl)
-            .then(response => response.json())
+            .then(response => {
+                console.log(`📥 Ontvangen response van info.json request`);
+                return response.json();
+            })
             .then(info => {
+                console.log(`✅ info.json succesvol geparsed:`, info);
                 this.isLoadingInfoJson = false;
                 const width = info.width;
                 const height = info.height;
+    
+                console.log(`📐 Afbeeldingsafmetingen: ${width}x${height}`);
     
                 if (width && height) {
                     this.imageBounds = L.latLngBounds(
                         this.map.unproject([0, height]),
                         this.map.unproject([width, 0])
                     );
+                    console.log(`🗺️ Berekende imageBounds:`, this.imageBounds);
     
+                    console.log(`🔧 Aanmaken van IIIF tileLayer...`);
                     const iiifLayer = L.tileLayer.iiif(infoJsonUrl, {
                         attribution: 'IIIF',
                         tileSize: 256,
@@ -157,12 +168,18 @@ class Editor {
                         continuousWorld: true,
                         noWrap: true,
                         crs: L.CRS.Simple
-                    }).addTo(this.map);
+                    });
     
+                    console.log(`➕ IIIF tileLayer aangemaakt, toevoegen aan map...`);
+                    iiifLayer.addTo(this.map);
+    
+                    console.log(`🔍 Aanpassen van map view...`);
                     this.map.fitBounds(this.imageBounds);
+    
+                    console.log(`📏 Updaten van grid imageBounds...`);
                     this.grid.imageBounds = this.imageBounds;
     
-                    console.log("✅ IIIF-afbeelding geladen!");
+                    console.log("✅ IIIF-afbeelding laadproces voltooid!");
                 } else {
                     console.warn("⚠️ Breedte of hoogte ontbreekt in info.json");
                 }
@@ -171,7 +188,7 @@ class Editor {
                 console.error("❌ Fout bij het laden van info.json:", error);
                 this.isLoadingInfoJson = false;
             });
-    }            
+    }      
 }
 
 export default Editor;
