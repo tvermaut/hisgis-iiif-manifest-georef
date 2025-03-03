@@ -163,18 +163,7 @@ class Editor {
                     console.log(`northEast:`, northEast);
     
                     console.log(`🔧 Aanmaken van IIIF tileLayer...`);
-                    const iiifLayer = L.tileLayer.iiif(infoJsonUrl, {
-                        attribution: 'IIIF',
-                        tileSize: 256,
-                        minZoom: 0,
-                        maxZoom: this.map.getMaxZoom(),
-                        bounds: this.imageBounds,
-                        reuseTiles: true,
-                        continuousWorld: true,
-                        noWrap: true,
-                        crs: L.CRS.Simple,
-                        zIndex: 100
-                    });
+                    const iiifLayer = L.tileLayer.iiif(infoJsonUrl);
     
                     console.log(`➕ IIIF tileLayer aangemaakt, toevoegen aan map...`);
                     iiifLayer.addTo(this.map);
