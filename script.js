@@ -155,7 +155,7 @@ class Editor {
     
                     // Maak een aangepaste tile layer met de juiste URL-format
                     const iiifLayer = L.tileLayer(`${iiifBaseUrl}/{region}/{size}/{rotation}/{quality}.{format}`, {
-                        attribution: 'IIIF',
+                        size: 256,
                         tileSize: 256,
                         minZoom: 0,
                         maxZoom: 10,
