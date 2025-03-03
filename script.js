@@ -19,11 +19,11 @@ function normalizeAngle(angle) {
     return angle;
 }
 
-// function convertCoordinates(point, map) {
-//     console.log('Ontvangen point:', point);
-//     console.log('Map referentie:', map);
-//     return map.unproject(point, map.getMaxZoom());
-// }
+function cc(point, map) {
+    console.log('Ontvangen point:', point);
+    console.log('Map referentie:', map);
+    return map.unproject(point, map.getMaxZoom());
+}
 
 // Wacht tot de DOM geladen is voordat we de editor starten
 document.addEventListener('DOMContentLoaded', () => {
@@ -101,7 +101,7 @@ class Editor {
         // Controleer of dit het eerste of tweede punt van de lijn is
         if (!this.axes[this.currentAxisId].polyline) {
             // Eerste punt van de lijn
-            this.axes[this.currentAxisId].polyline = L.polyline([event.containerPoint], { color: this.axes[this.currentAxisId].color }).addTo(this.map);
+            this.axes[this.currentAxisId].polyline = L.polyline([cc(event.containerPoint)], { color: this.axes[this.currentAxisId].color }).addTo(this.map);
         } else {
             // Tweede punt van de lijn
             this.axes[this.currentAxisId].polyline.addLatLng(event.containerPoint);
