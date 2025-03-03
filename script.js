@@ -19,6 +19,12 @@ function normalizeAngle(angle) {
     return angle;
 }
 
+function convertCoordinates(point, map) {
+    console.log('Ontvangen point:', point);
+    console.log('Map referentie:', map);
+    return map.unproject(point, map.getMaxZoom());
+}
+
 // Wacht tot de DOM geladen is voordat we de editor starten
 document.addEventListener('DOMContentLoaded', () => {
     const map = L.map('map', {
@@ -82,7 +88,7 @@ class Editor {
         if (!this.currentDrawing) return;
     
         // Verkrijg containerpunt (pixel binnen de viewport)
-        const containerPoint = convertCoordinates(event.containerPoint);
+        const containerPoint = convertCoordinates(event.containerPoint, this.map);
         console.log('Klik event:', event.containerPoint);
         console.log('Geconverteerd punt:', convertCoordinates(event.containerPoint));
         console.log('Huidige map bounds:', this.map.getBounds());
