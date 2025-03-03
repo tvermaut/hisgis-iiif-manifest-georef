@@ -128,10 +128,16 @@ class Editor {
         this.axes.x2.value = parseFloat(document.getElementById('x2-axis-value').value);
     }
 
-    loadIIIFLayer(url) {
-        fetch(url)
+    loadIIIFLayer(infoJsonUrl) {
+        if (this.isLoadingInfoJson) return;
+        this.isLoadingInfoJson = true;
+    
+        console.log(`🔄 Laden van IIIF-afbeelding info van: ${infoJsonUrl}`);
+        
+        fetch(infoJsonUrl)
             .then(response => response.json())
             .then(info => {
+                this.isLoadingInfoJson = false;
                 const width = info.width;
                 const height = info.height;
     
@@ -139,19 +145,31 @@ class Editor {
                     // Stel bounds in op basis van breedte en hoogte
                     this.imageBounds = L.latLngBounds(
                         this.map.unproject([0, height]), // Linksonder
-                        this.map.unproject([width, 0])  // Rechtsboven
+                        this.map.unproject([width, 0])   // Rechtsboven
                     );
     
-                    L.imageOverlay(url, this.imageBounds).addTo(this.map);
+                    // Gebruik de IIIF tileserver URL voor de afbeelding
+                    const iiifTileUrl = info['@id'] || info.id;
+                    if (!iiifTileUrl) {
+                        throw new Error("IIIF tileserver URL niet gevonden in info.json");
+                    }
+    
+                    // Maak een nieuwe IIIF-laag aan
+                    const iiifLayer = L.tileLayer.iiif(iiifTileUrl).addTo(this.map);
+    
                     this.map.fitBounds(this.imageBounds);
+                    this.grid.imageBounds = this.imageBounds;
     
                     console.log("✅ IIIF-afbeelding geladen!");
                 } else {
                     console.warn("⚠️ Breedte of hoogte ontbreekt in info.json");
                 }
             })
-            .catch(error => console.error("❌ Fout bij het laden van info.json:", error));
-    }
+            .catch(error => {
+                console.error("❌ Fout bij het laden van info.json:", error);
+                this.isLoadingInfoJson = false;
+            });
+    }    
 }
 
 export default Editor;
