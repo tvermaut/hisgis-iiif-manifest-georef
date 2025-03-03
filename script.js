@@ -19,11 +19,11 @@ function normalizeAngle(angle) {
     return angle;
 }
 
-function convertCoordinates(point, map) {
-    console.log('Ontvangen point:', point);
-    console.log('Map referentie:', map);
-    return map.unproject(point, map.getMaxZoom());
-}
+// function convertCoordinates(point, map) {
+//     console.log('Ontvangen point:', point);
+//     console.log('Map referentie:', map);
+//     return map.unproject(point, map.getMaxZoom());
+// }
 
 // Wacht tot de DOM geladen is voordat we de editor starten
 document.addEventListener('DOMContentLoaded', () => {
@@ -88,24 +88,23 @@ class Editor {
         if (!this.currentDrawing) return;
     
         // Verkrijg containerpunt (pixel binnen de viewport)
-        const containerPoint = convertCoordinates(event.containerPoint, this.map);
-        console.log('Klik event:', event.containerPoint);
-        console.log('Geconverteerd punt:', convertCoordinates(event.containerPoint, this.map));
-        console.log('Huidige map bounds:', this.map.getBounds());
+        // console.log('Klik event:', event.containerPoint);
+        // console.log('Geconverteerd punt:', convertCoordinates(event.containerPoint, this.map));
+        // console.log('Huidige map bounds:', this.map.getBounds());
 
     
         // Converteer containerpunt naar LatLng-coördinaten binnen het afbeeldingsgebied
-        const latlng = this.map.unproject(containerPoint);
+        // const latlng = this.map.unproject(containerPoint);
     
         console.log(`🖱️ Klik geregistreerd op pixel: (${containerPoint.x}, ${containerPoint.y}), LatLng: ${latlng}`);
     
         // Controleer of dit het eerste of tweede punt van de lijn is
         if (!this.axes[this.currentAxisId].polyline) {
             // Eerste punt van de lijn
-            this.axes[this.currentAxisId].polyline = L.polyline([latlng], { color: this.axes[this.currentAxisId].color }).addTo(this.map);
+            this.axes[this.currentAxisId].polyline = L.polyline([event.containerPoint], { color: this.axes[this.currentAxisId].color }).addTo(this.map);
         } else {
             // Tweede punt van de lijn
-            this.axes[this.currentAxisId].polyline.addLatLng(latlng);
+            this.axes[this.currentAxisId].polyline.addLatLng(event.containerPoint);
             this.addOrUpdateAxis(this.currentAxisId, this.axes[this.currentAxisId].polyline.getLatLngs());
             this.currentDrawing = false;
             this.map.getContainer().style.cursor = ''; // Reset cursor
