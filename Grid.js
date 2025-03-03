@@ -52,7 +52,7 @@ class Grid {
         const centerY = this.imageBounds._northEast.lng / 2;
 
         const angleRad = (this.optimalAngle * Math.PI) / 180;
-        this.distance.berekend = (this.imageBounds.max.x - this.imageBounds.min.x) / (this.axes.x2.value - this.axes.x.value) * this.distance.theoretic;
+        this.distance.berekend = (this.imageBounds._northEast.lat) / (this.axes.x2.value - this.axes.x.value) * this.distance.theoretic;
 
         const rotatePoint = (x, y) => {
             const dx = x - centerX;
