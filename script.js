@@ -165,26 +165,14 @@ class Editor {
                         noWrap: true,
                         crs: L.CRS.Simple,
     
-                        // Functie om de URL voor de tile te genereren
                         getTileUrl: function (coords) {
                             const zoom = coords.z;
                             const x = coords.x;
                             const y = coords.y;
                             const tilesize = this.options.tileSize;
-                            const scale = Math.pow(2, zoom);
                         
-                            // Region berekenen
-                            const regionX = x * tilesize;
-                            const regionY = y * tilesize;
-                            const regionW = Math.min(tilesize, this.imageBounds.max.x - regionX);
-                            const regionH = Math.min(tilesize, this.imageBounds.max.y - regionY);
-                            const region = `${regionX},${regionY},${regionW},${regionH}`;
-                        
-                            // Size bepalen
-                            const size = `${tilesize},`; // Breedte gelijk aan tilesize, hoogte automatisch
-                        
-                            // IIIF URL samenstellen
-                            const iiifTileUrl = `${iiifBaseUrl}/${region}/${size}/0/default.jpg`;
+                            // Correcte IIIF URL samenstellen
+                            const iiifTileUrl = `${iiifBaseUrl}/${x*tilesize},${y*tilesize},${tilesize},${tilesize}/${tilesize},/0/default.jpg`;
                         
                             return iiifTileUrl;
                         }
