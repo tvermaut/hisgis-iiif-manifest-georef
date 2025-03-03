@@ -90,7 +90,7 @@ class Editor {
         // Verkrijg containerpunt (pixel binnen de viewport)
         const containerPoint = convertCoordinates(event.containerPoint, this.map);
         console.log('Klik event:', event.containerPoint);
-        console.log('Geconverteerd punt:', convertCoordinates(event.containerPoint));
+        console.log('Geconverteerd punt:', convertCoordinates(event.containerPoint, this.map));
         console.log('Huidige map bounds:', this.map.getBounds());
 
     
