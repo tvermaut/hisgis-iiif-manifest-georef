@@ -103,7 +103,7 @@ class Editor {
         // Controleer of dit het eerste of tweede punt van de lijn is
         if (!this.axes[this.currentAxisId].polyline) {
             // Eerste punt van de lijn
-            this.axes[this.currentAxisId].polyline = L.polyline([cc(event.containerPoint, map)], { color: this.axes[this.currentAxisId].color }).addTo(this.map);
+            this.axes[this.currentAxisId].polyline = L.polyline([cc(event.containerPoint, this.map)], { color: this.axes[this.currentAxisId].color }).addTo(this.map);
         } else {
             // Tweede punt van de lijn
             this.axes[this.currentAxisId].polyline.addLatLng(event.containerPoint);
