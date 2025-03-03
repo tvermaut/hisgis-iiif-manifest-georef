@@ -41,6 +41,7 @@ class AxisEditor {
         };
         this.init();
         this.isLoadingInfoJson = false;
+        this.imageBounds = null;
 
     }
     
@@ -206,12 +207,12 @@ class AxisEditor {
     
                 if (width && height) {
                     // Stel bounds in op basis van breedte en hoogte
-                    const imageBounds = L.latLngBounds([
+                    this.imageBounds = L.latLngBounds([
                         [0, 0],
                         [height, width]
                     ]);
     
-                    this.map.fitBounds(imageBounds);
+                    this.map.fitBounds(this.imageBounds);
                     console.log("✅ IIIF-afbeelding geladen!");
                 } else {
                     console.warn("⚠️ Breedte of hoogte ontbreekt in info.json");
