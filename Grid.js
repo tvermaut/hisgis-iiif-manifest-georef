@@ -47,9 +47,9 @@ class Grid {
         if (!this.imageBounds) {
             console.error('Image bounds zijn niet ingesteld. Laad eerst een afbeelding.');
             return;
-        } else {console.log("imageBounds: "); console.log(this.imageBounds);}
-        const centerX = (this.imageBounds[0][0] + this.imageBounds[1][0]) / 2;
-        const centerY = (this.imageBounds[0][1] + this.imageBounds[1][1]) / 2;
+        } else {console.log("imageBounds: "); console.log(this.imageBounds)}
+        const centerX = this.imageBounds._northEast.lat / 2;
+        const centerY = this.imageBounds._northEast.lng / 2;
 
         const angleRad = (this.optimalAngle * Math.PI) / 180;
         this.distance.berekend = (this.imageBounds.max.x - this.imageBounds.min.x) / (this.axes.x2.value - this.axes.x.value) * this.distance.theoretic;
