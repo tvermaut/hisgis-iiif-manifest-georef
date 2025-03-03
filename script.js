@@ -147,42 +147,16 @@ class Editor {
                         this.map.unproject([width, 0])
                     );
     
-                    // Haal de IIIF base URL op uit info.json
-                    const iiifBaseUrl = info['@id'] || info.id;
-                    if (!iiifBaseUrl) {
-                        throw new Error("IIIF base URL niet gevonden in info.json");
-                    }
-    
-                    // Maak een tile layer met de juiste URL-format
-                    const iiifLayer = L.tileLayer(`${iiifBaseUrl}/{z}/{x}/{y}.jpg`, {
+                    const iiifLayer = L.tileLayer.iiif(infoJsonUrl, {
                         attribution: 'IIIF',
                         tileSize: 256,
                         minZoom: 0,
-                        maxZoom: this.map.getMaxZoom(),
+                        maxZoom: 10,
                         bounds: this.imageBounds,
                         reuseTiles: true,
                         continuousWorld: true,
                         noWrap: true,
-                        crs: L.CRS.Simple,
-    
-                        getTileUrl: function (coords) {
-                            const zoom = this._getZoomForUrl();
-                            const tileSize = this.options.tileSize;
-                            const nwPoint = coords.multiplyBy(tileSize);
-                            const imageSize = this._imageSize || this.options.imageSize;
-                            
-                            // Bereken de juiste regio voor deze tegel
-                            const x = Math.floor(nwPoint.x);
-                            const y = Math.floor(nwPoint.y);
-                            const width = Math.min(tileSize, imageSize.x - x);
-                            const height = Math.min(tileSize, imageSize.y - y);
-                            
-                            // Stel de IIIF URL samen met de juiste regio en grootte
-                            const region = `${x},${y},${width},${height}`;
-                            const size = `${tileSize},`;  // Breedte opgeven, hoogte automatisch berekend
-                            
-                            return `${this._url}/${region}/${size}/0/default.jpg`;
-                        }                        
+                        crs: L.CRS.Simple
                     }).addTo(this.map);
     
                     this.map.fitBounds(this.imageBounds);
@@ -197,9 +171,7 @@ class Editor {
                 console.error("❌ Fout bij het laden van info.json:", error);
                 this.isLoadingInfoJson = false;
             });
-    }
-    
-        
+    }            
 }
 
 export default Editor;
