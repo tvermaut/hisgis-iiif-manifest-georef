@@ -60,6 +60,10 @@ class Editor {
         console.log("✅ DOM is volledig geladen!");
         this.map.on('click', this.handleMapClick.bind(this));
 
+        this.axes.x.map = this.map;
+        this.axes.y.map = this.map;
+        this.axes.x2.map = this.map;
+
         // Event-listener voor het laden van IIIF afbeelding
         document.getElementById('load-iiif').addEventListener('click', () => {
             const url = document.getElementById('info-json-url').value;
