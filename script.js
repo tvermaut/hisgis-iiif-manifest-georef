@@ -338,5 +338,5 @@ class AxisEditor {
             L.polyline([latlng1, latlng2], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
         }
     
-    
+    }
 }
