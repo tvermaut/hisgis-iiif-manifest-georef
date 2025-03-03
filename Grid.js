@@ -48,11 +48,11 @@ class Grid {
             console.error('Image bounds zijn niet ingesteld. Laad eerst een afbeelding.');
             return;
         } else {console.log("imageBounds: "); console.log(this.imageBounds)}
-        const centerX = this.imageBounds._northEast.lat / 2;
-        const centerY = this.imageBounds._northEast.lng / 2;
+        const centerX = this.imageBounds._northEast.lng / 2;
+        const centerY = this.imageBounds._northEast.lat / 2;
 
         const angleRad = (this.optimalAngle * Math.PI) / 180;
-        this.distance.berekend = (this.imageBounds._northEast.lat) / (this.axes.x2.value - this.axes.x.value) * this.distance.theoretic;
+        this.distance.berekend = (this.imageBounds._northEast.lng) / (this.axes.x2.value - this.axes.x.value) * this.distance.theoretic;
 
         const rotatePoint = (x, y) => {
             const dx = x - centerX;
@@ -64,22 +64,25 @@ class Grid {
         };
 
         // Bereken het startpunt voor het grid (gecentreerd)
-        const startX = centerX - Math.floor((this.imageBounds._northEast.lat) / (2 * this.distance.berekend)) * this.distance.berekend;
-        const startY = centerY - Math.floor((this.imageBounds._northEast.lng) / (2 * this.distance.berekend)) * this.distance.berekend;
+        const startX = centerX - Math.floor((this.imageBounds._northEast.lng) / (2 * this.distance.berekend)) * this.distance.berekend;
+        const startY = centerY - Math.floor((this.imageBounds._northEast.lat) / (2 * this.distance.berekend)) * this.distance.berekend;
 
         console.log("beginnen met tekenen...")
+        console.log("startX: " + startX);
+        console.log("startY: " + startY);
+        console.log("distance.berekend: " + this.distance.berekend);
 
         // // Teken verticale lijnen
-        // for (let x = startX; x <= this.imageBounds._northEast.lat; x += this.distance.berekend) {
+        // for (let x = startX; x <= this.imageBounds._northEast.lng; x += this.distance.berekend) {
         //     const start = rotatePoint(x, 0);
-        //     const end = rotatePoint(x, this.imageBounds._northEast.lng);
+        //     const end = rotatePoint(x, this.imageBounds._northEast.lat);
         //     L.polyline([[start.y, start.x], [end.y, end.x]], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
         // }
 
         // // Teken horizontale lijnen
-        // for (let y = startY; y <= this.imageBounds._northEast.lng; y += this.distance.berekend) {
+        // for (let y = startY; y <= this.imageBounds._northEast.lat; y += this.distance.berekend) {
         //     const start = rotatePoint(0, y);
-        //     const end = rotatePoint(this.imageBounds._northEast.lat, y);
+        //     const end = rotatePoint(this.imageBounds._northEast.lng, y);
         //     L.polyline([[start.y, start.x], [end.y, end.x]], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
         // }
     }
