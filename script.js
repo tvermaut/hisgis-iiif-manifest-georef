@@ -170,10 +170,22 @@ class Editor {
                             const zoom = coords.z;
                             const x = coords.x;
                             const y = coords.y;
-    
-                            // Correcte IIIF URL
-                            const iiifTileUrl = `${iiifBaseUrl}/${x},${y},${width},${height}/${zoom}/0/default.jpg`;
-    
+                            const tilesize = this.options.tileSize;
+                            const scale = Math.pow(2, zoom);
+                        
+                            // Region berekenen
+                            const regionX = x * tilesize;
+                            const regionY = y * tilesize;
+                            const regionW = Math.min(tilesize, this.imageBounds.max.x - regionX);
+                            const regionH = Math.min(tilesize, this.imageBounds.max.y - regionY);
+                            const region = `${regionX},${regionY},${regionW},${regionH}`;
+                        
+                            // Size bepalen
+                            const size = `${tilesize},`; // Breedte gelijk aan tilesize, hoogte automatisch
+                        
+                            // IIIF URL samenstellen
+                            const iiifTileUrl = `${iiifBaseUrl}/${region}/${size}/0/default.jpg`;
+                        
                             return iiifTileUrl;
                         }
                     }).addTo(this.map);
