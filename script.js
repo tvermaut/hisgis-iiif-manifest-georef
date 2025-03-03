@@ -88,7 +88,7 @@ class Editor {
         if (!this.currentDrawing) return;
     
         // Verkrijg containerpunt (pixel binnen de viewport)
-        // console.log('Klik event:', event.containerPoint);
+        console.log('event.containerPoint:', event.containerPoint);
         // console.log('Geconverteerd punt:', convertCoordinates(event.containerPoint, this.map));
         // console.log('Huidige map bounds:', this.map.getBounds());
 
