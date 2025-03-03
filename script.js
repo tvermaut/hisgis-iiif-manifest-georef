@@ -296,29 +296,32 @@ class AxisEditor {
     drawGrid(gridDistance, pixelsPerMeter, optimalAngle) {
         const gridLayer = L.layerGroup().addTo(this.map);
     
-        // Bereken de grenzen van de afbeelding (niet afhankelijk van viewport)
-        const bounds = this.imageBounds; // Zorg dat je imageBounds opslaat bij het laden van de afbeelding
+        // Controleer of imageBounds beschikbaar is
+        if (!this.imageBounds) {
+            console.error('Image bounds not set. Ensure the image is loaded before generating the grid.');
+            return;
+        }
+    
+        // Gebruik imageBounds om grenzen te bepalen
+        const bounds = this.imageBounds;
         const northWest = bounds.getNorthWest();
         const southEast = bounds.getSouthEast();
+    
+        // Bepaal start- en eindpunten in pixelcoördinaten
         const startPoint = this.map.latLngToLayerPoint(northWest);
         const endPoint = this.map.latLngToLayerPoint(southEast);
     
-        // Pas rotatie toe
+        // Bereken gecorrigeerde hoek
         const correctedAngle = optimalAngle;
-        const rotatedStart = this.rotatePoint(startPoint, -correctedAngle, startPoint);
-        const rotatedEnd = this.rotatePoint(endPoint, -correctedAngle, startPoint);
     
-        // Bereken gridlijnen
-        let startX = rotatedStart.x;
-        let startY = rotatedStart.y;
-        let endX = rotatedEnd.x;
-        let endY = rotatedEnd.y;
-    
-        let firstX = Math.floor(startX / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
-        let firstY = Math.floor(startY / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
+        // Bereken eerste lijnen (uitgelijnd met afbeelding)
+        let startX = Math.floor(startPoint.x / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
+        let startY = Math.floor(startPoint.y / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
+        let endX = Math.ceil(endPoint.x / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
+        let endY = Math.ceil(endPoint.y / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
     
         // Teken verticale lijnen
-        for (let x = firstX; x <= endX; x += gridDistance * pixelsPerMeter) {
+        for (let x = startX; x <= endX; x += gridDistance * pixelsPerMeter) {
             const point1 = this.rotatePoint(L.point(x, startY), correctedAngle, startPoint);
             const point2 = this.rotatePoint(L.point(x, endY), correctedAngle, startPoint);
             const latlng1 = this.map.layerPointToLatLng(point1);
@@ -327,14 +330,13 @@ class AxisEditor {
         }
     
         // Teken horizontale lijnen
-        for (let y = firstY; y <= endY; y += gridDistance * pixelsPerMeter) {
+        for (let y = startY; y <= endY; y += gridDistance * pixelsPerMeter) {
             const point1 = this.rotatePoint(L.point(startX, y), correctedAngle, startPoint);
             const point2 = this.rotatePoint(L.point(endX, y), correctedAngle, startPoint);
             const latlng1 = this.map.layerPointToLatLng(point1);
             const latlng2 = this.map.layerPointToLatLng(point2);
             L.polyline([latlng1, latlng2], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
         }
-    }
     
     
 }
