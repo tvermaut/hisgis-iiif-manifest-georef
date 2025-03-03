@@ -207,11 +207,7 @@ class AxisEditor {
     
                 if (width && height) {
                     // Stel bounds in op basis van breedte en hoogte
-                    this.imageBounds = L.latLngBounds([
-                        [0, 0],
-                        [height, width]
-                    ]);
-    
+                    this.imageBounds = { min: { x: 0, y: 0 }, max: { x: width, y: height } };
                     this.map.fitBounds(this.imageBounds);
                     console.log("✅ IIIF-afbeelding geladen!");
                 } else {
