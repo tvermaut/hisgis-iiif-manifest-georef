@@ -81,28 +81,25 @@ class Editor {
     handleMapClick(event) {
         if (!this.currentDrawing) return;
     
-        const containerPoint = event.containerPoint;
-        const pixelCoords = {
-            x: Math.round(containerPoint.x),
-            y: Math.round(containerPoint.y)
-        };
+        const containerPoint = event.containerPoint; // Pixelcoördinaten
+        const latlng = this.map.unproject(containerPoint); // Converteer naar LatLng
     
-        console.log(`🖱️ Klik geregistreerd op pixel: (${pixelCoords.x}, ${pixelCoords.y})`);
+        console.log(`🖱️ Klik geregistreerd op pixel: (${containerPoint.x}, ${containerPoint.y}), LatLng: ${latlng}`);
     
         if (!this.axes[this.currentAxisId].polyline) {
             // Eerste punt van de as
-            this.axes[this.currentAxisId].polyline = L.polyline([pixelCoords], { color: this.axes[this.currentAxisId].color }).addTo(this.map);
+            this.axes[this.currentAxisId].polyline = L.polyline([latlng], { color: this.axes[this.currentAxisId].color }).addTo(this.map);
         } else {
             // Tweede punt van de as
-            this.axes[this.currentAxisId].polyline.addLatLng(pixelCoords);
+            this.axes[this.currentAxisId].polyline.addLatLng(latlng);
             this.addOrUpdateAxis(this.currentAxisId, this.axes[this.currentAxisId].polyline.getLatLngs());
             this.currentDrawing = false;
             this.map.getContainer().style.cursor = '';
         }
-    }    
-
-    addOrUpdateAxis(axisId, pixelCoords) {
-        this.axes[axisId].polyline.setLatLngs(pixelCoords);
+    }
+ 
+    addOrUpdateAxis(axisId, latlngs) {
+        this.axes[axisId].polyline.setLatLngs(latlngs);
         this.axes[axisId].addMarkersToLine(this.map);
         this.grid.imageBounds = this.imageBounds;
     }

@@ -17,13 +17,13 @@ class Axis {
     }
 
     addMarkersToLine(map) {
-        const pixelCoords = this.polyline.getLatLngs();
+        const latlngs = this.polyline.getLatLngs();
     
-        const createOrUpdateMarker = (marker, coords) => {
+        const createOrUpdateMarker = (marker, latlng) => {
             if (marker) {
-                marker.setLatLng(coords);
+                marker.setLatLng(latlng);
             } else {
-                marker = L.marker(coords, {icon: this.createSvgIcon(), draggable: true}).addTo(map);
+                marker = L.marker(latlng, {icon: this.createSvgIcon(), draggable: true}).addTo(map);
                 marker.on('drag', () => {        
                     if (this.polyline && this.startMarker && this.endMarker) {
                         const newCoords = [this.startMarker.getLatLng(), this.endMarker.getLatLng()];
@@ -34,9 +34,9 @@ class Axis {
             return marker;
         };
     
-        this.startMarker = createOrUpdateMarker(this.startMarker, pixelCoords[0]);
-        this.endMarker = createOrUpdateMarker(this.endMarker, pixelCoords[pixelCoords.length - 1]);
-    }    
+        this.startMarker = createOrUpdateMarker(this.startMarker, latlngs[0]);
+        this.endMarker = createOrUpdateMarker(this.endMarker, latlngs[latlngs.length - 1]);
+    }       
 
     createSvgIcon() {
         return L.divIcon({
