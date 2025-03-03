@@ -166,16 +166,23 @@ class Editor {
                         crs: L.CRS.Simple,
     
                         getTileUrl: function (coords) {
-                            const zoom = coords.z;
-                            const x = coords.x;
-                            const y = coords.y;
-                            const tilesize = this.options.tileSize;
-                        
-                            // Correcte IIIF URL samenstellen
-                            const iiifTileUrl = `${iiifBaseUrl}/${x*tilesize},${y*tilesize},${tilesize},${tilesize}/${tilesize},/0/default.jpg`;
-                        
-                            return iiifTileUrl;
-                        }
+                            const zoom = this._getZoomForUrl();
+                            const tileSize = this.options.tileSize;
+                            const nwPoint = coords.multiplyBy(tileSize);
+                            const imageSize = this._imageSize || this.options.imageSize;
+                            
+                            // Bereken de juiste regio voor deze tegel
+                            const x = Math.floor(nwPoint.x);
+                            const y = Math.floor(nwPoint.y);
+                            const width = Math.min(tileSize, imageSize.x - x);
+                            const height = Math.min(tileSize, imageSize.y - y);
+                            
+                            // Stel de IIIF URL samen met de juiste regio en grootte
+                            const region = `${x},${y},${width},${height}`;
+                            const size = `${tileSize},`;  // Breedte opgeven, hoogte automatisch berekend
+                            
+                            return `${this._url}/${region}/${size}/0/default.jpg`;
+                        }                        
                     }).addTo(this.map);
     
                     this.map.fitBounds(this.imageBounds);
