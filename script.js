@@ -92,7 +92,9 @@ class Editor {
         // console.log('Geconverteerd punt:', convertCoordinates(event.containerPoint, this.map));
         // console.log('Huidige map bounds:', this.map.getBounds());
 
-    
+        console.log('This: ', this);
+        console.log('Event: ', event);
+
         // Converteer containerpunt naar LatLng-coördinaten binnen het afbeeldingsgebied
         // const latlng = this.map.unproject(containerPoint);
     
