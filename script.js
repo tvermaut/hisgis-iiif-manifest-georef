@@ -296,47 +296,39 @@ class AxisEditor {
     drawGrid(gridDistance, pixelsPerMeter, optimalAngle) {
         const gridLayer = L.layerGroup().addTo(this.map);
     
-        // Controleer of imageBounds beschikbaar is
-        if (!this.imageBounds) {
-            console.error('Image bounds not set. Ensure the image is loaded before generating the grid.');
+        // Verkrijg de bounds van de afbeelding (rechthoekig coördinatensysteem)
+        const bounds = this.imageBounds; // Zorg dat deze is ingesteld bij het laden van de afbeelding
+        if (!bounds) {
+            console.error('Image bounds zijn niet ingesteld. Laad eerst een afbeelding.');
             return;
         }
     
-        // Gebruik imageBounds om grenzen te bepalen
-        const bounds = this.imageBounds;
-        const northWest = bounds.getNorthWest();
-        const southEast = bounds.getSouthEast();
+        // Verkrijg de minimale en maximale coördinaten
+        const minX = bounds.min.x;
+        const minY = bounds.min.y;
+        const maxX = bounds.max.x;
+        const maxY = bounds.max.y;
     
-        // Bepaal start- en eindpunten in pixelcoördinaten
-        const startPoint = this.map.latLngToLayerPoint(northWest);
-        const endPoint = this.map.latLngToLayerPoint(southEast);
+        // Bereken de rotatiehoek in radialen
+        const angleRad = optimalAngle * Math.PI / 180;
     
-        // Bereken gecorrigeerde hoek
-        const correctedAngle = optimalAngle;
-    
-        // Bereken eerste lijnen (uitgelijnd met afbeelding)
-        let startX = Math.floor(startPoint.x / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
-        let startY = Math.floor(startPoint.y / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
-        let endX = Math.ceil(endPoint.x / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
-        let endY = Math.ceil(endPoint.y / (gridDistance * pixelsPerMeter)) * (gridDistance * pixelsPerMeter);
+        // Bereken het aantal lijnen dat nodig is
+        const gridPixels = gridDistance * pixelsPerMeter;
     
         // Teken verticale lijnen
-        for (let x = startX; x <= endX; x += gridDistance * pixelsPerMeter) {
-            const point1 = this.rotatePoint(L.point(x, startY), correctedAngle, startPoint);
-            const point2 = this.rotatePoint(L.point(x, endY), correctedAngle, startPoint);
-            const latlng1 = this.map.layerPointToLatLng(point1);
-            const latlng2 = this.map.layerPointToLatLng(point2);
-            L.polyline([latlng1, latlng2], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
+        for (let x = Math.floor(minX / gridPixels) * gridPixels; x <= maxX; x += gridPixels) {
+            const start = this.rotatePoint({ x: x, y: minY }, angleRad, { x: minX, y: minY });
+            const end = this.rotatePoint({ x: x, y: maxY }, angleRad, { x: minX, y: minY });
+    
+            L.polyline([[start.x, start.y], [end.x, end.y]], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
         }
     
         // Teken horizontale lijnen
-        for (let y = startY; y <= endY; y += gridDistance * pixelsPerMeter) {
-            const point1 = this.rotatePoint(L.point(startX, y), correctedAngle, startPoint);
-            const point2 = this.rotatePoint(L.point(endX, y), correctedAngle, startPoint);
-            const latlng1 = this.map.layerPointToLatLng(point1);
-            const latlng2 = this.map.layerPointToLatLng(point2);
-            L.polyline([latlng1, latlng2], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
-        }
+        for (let y = Math.floor(minY / gridPixels) * gridPixels; y <= maxY; y += gridPixels) {
+            const start = this.rotatePoint({ x: minX, y: y }, angleRad, { x: minX, y: minY });
+            const end = this.rotatePoint({ x: maxX, y: y }, angleRad, { x: minX, y: minY });
     
+            L.polyline([[start.x, start.y], [end.x, end.y]], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
+        }
     }
 }
