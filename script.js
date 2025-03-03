@@ -292,39 +292,44 @@ class AxisEditor {
     drawGrid(gridDistance, pixelsPerMeter, optimalAngle) {
         const gridLayer = L.layerGroup().addTo(this.map);
     
-        // Verkrijg de bounds van de afbeelding (rechthoekig coördinatensysteem)
-        const bounds = this.imageBounds; // Zorg dat deze is ingesteld bij het laden van de afbeelding
+        const bounds = this.imageBounds;
         if (!bounds) {
             console.error('Image bounds zijn niet ingesteld. Laad eerst een afbeelding.');
             return;
         }
     
-        // Verkrijg de minimale en maximale coördinaten
         const minX = bounds.min.x;
-        const minY = bounds.min.y;
         const maxX = bounds.max.x;
+        const minY = bounds.min.y;
         const maxY = bounds.max.y;
     
-        // Bereken de rotatiehoek in radialen
-        const angleRad = optimalAngle * Math.PI / 180;
+        // Corrigeer de hoek (als deze in graden is)
+        const angleRad = (optimalAngle * Math.PI) / 180;
     
-        // Bereken het aantal lijnen dat nodig is
         const gridPixels = gridDistance * pixelsPerMeter;
     
-        // Teken verticale lijnen
-        for (let x = Math.floor(minX / gridPixels) * gridPixels; x <= maxX; x += gridPixels) {
-            const start = this.rotatePoint({ x: x, y: minY }, angleRad, { x: minX, y: minY });
-            const end = this.rotatePoint({ x: x, y: maxY }, angleRad, { x: minX, y: minY });
+        // Hulpfunctie om een punt te roteren
+        const rotatePoint = (x, y) => {
+            const dx = x - minX;
+            const dy = y - minY;
+            return {
+                x: minX + dx * Math.cos(angleRad) - dy * Math.sin(angleRad),
+                y: minY + dx * Math.sin(angleRad) + dy * Math.cos(angleRad)
+            };
+        };
     
-            L.polyline([[start.x, start.y], [end.x, end.y]], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
+        // Teken verticale lijnen
+        for (let x = minX; x <= maxX; x += gridPixels) {
+            const start = rotatePoint(x, minY);
+            const end = rotatePoint(x, maxY);
+            L.polyline([[start.y, start.x], [end.y, end.x]], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
         }
     
         // Teken horizontale lijnen
-        for (let y = Math.floor(minY / gridPixels) * gridPixels; y <= maxY; y += gridPixels) {
-            const start = this.rotatePoint({ x: minX, y: y }, angleRad, { x: minX, y: minY });
-            const end = this.rotatePoint({ x: maxX, y: y }, angleRad, { x: minX, y: minY });
-    
-            L.polyline([[start.x, start.y], [end.x, end.y]], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
+        for (let y = minY; y <= maxY; y += gridPixels) {
+            const start = rotatePoint(minX, y);
+            const end = rotatePoint(maxX, y);
+            L.polyline([[start.y, start.x], [end.y, end.x]], { color: 'rgba(255, 0, 0, 0.5)', weight: 1 }).addTo(gridLayer);
         }
     }
 }
